@@ -1,0 +1,23 @@
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+
+.env
+.env.*
+!.env.example
+
+instance/
+.pytest_cache/
+.DS_Store
+Thumbs.db
+
+*.log
+# Database backups - never upload database records
+*.sql
+*_backup*
+*.before_render_backup
+
+# Python cache
+__pycache__/

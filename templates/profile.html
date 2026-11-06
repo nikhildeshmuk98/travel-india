@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Profile | Travel India</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --orange: #ff7417;
+            --orange-light: #ffad78;
+            --background: #080e1a;
+            --card: rgba(255,255,255,.055);
+            --border: rgba(255,255,255,.10);
+            --muted: #a2adbf;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        body::before {
+            background: rgba(255,116,23,.09);
+            top: -180px;
+            left: -180px;
+        }
+
+        body::after {
+            background: rgba(40,100,210,.09);
+            right: -180px;
+            bottom: -180px;
+        }
+
+        .header {
+            min-height: 85px;
+            padding: 12px 6%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+            background: rgba(8,14,26,.85);
+            backdrop-filter: blur(20px);
+        }
+
+        .logo img {
+            width: 155px;
+            max-height: 65px;
+            object-fit: contain;
+        }
+
+        .header-right,
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .header-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            overflow: hidden;
+            background: linear-gradient(135deg,#ff7417,#ffb66c);
+            display: grid;
+            place-items: center;
+            font-size: 19px;
+            font-weight: 800;
+        }
+
+        .header-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .header-user-info h4 {
+            font-size: 13px;
+        }
+
+        .header-user-info p {
+            color: var(--muted);
+            font-size: 11px;
+            margin-top: 4px;
+        }
+
+        .container {
+            max-width: 1450px;
+            margin: auto;
+            padding: 38px 6% 70px;
+        }
+
+        .page-heading {
+            margin-bottom: 30px;
+            animation: fadeUp .7s ease;
+        }
+
+        .page-heading span {
+            color: var(--orange-light);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 3px;
+        }
+
+        .page-heading h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: clamp(32px,5vw,47px);
+            margin: 9px 0;
+        }
+
+        .page-heading h1 b {
+            color: var(--orange);
+        }
+
+        .page-heading p {
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 320px minmax(0,1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .glass {
+            background: var(--card);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            border-radius: 23px;
+            box-shadow: 0 20px 60px rgba(0,0,0,.20);
+        }
+
+        .sidebar {
+            padding: 27px;
+            position: sticky;
+            top: 20px;
+            animation: fadeUp .8s ease;
+        }
+
+        .avatar-wrapper {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0 18px;
+        }
+
+        .avatar-ring {
+            position: relative;
+            width: 140px;
+            height: 140px;
+            padding: 5px;
+            border-radius: 50%;
+            background: linear-gradient(135deg,#ff7417,#ffd1a7,#ff7417);
+            box-shadow: 0 0 35px rgba(255,116,23,.25);
+        }
+
+        .avatar-ring img,
+        .fallback-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #111b2b;
+        }
+
+        .fallback-avatar {
+            display: grid;
+            place-items: center;
+            background: linear-gradient(135deg,#ff7417,#ffb66c);
+            font-family: 'Outfit',sans-serif;
+            font-size: 55px;
+            font-weight: 800;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .camera-button {
+            position: absolute;
+            right: 0;
+            bottom: 5px;
+            width: 38px;
+            height: 38px;
+            border: 3px solid #111b2b;
+            border-radius: 50%;
+            background: var(--orange);
+            color: white;
+            cursor: pointer;
+            font-size: 17px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+            font-family: 'Outfit',sans-serif;
+            font-size: 21px;
+            margin-bottom: 5px;
+            overflow-wrap: anywhere;
+        }
+
+        .sidebar-email {
+            text-align: center;
+            color: var(--muted);
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+
+        .member {
+            display: table;
+            margin: 17px auto 23px;
+            color: #ffb37f;
+            background: rgba(255,116,23,.12);
+            border: 1px solid rgba(255,116,23,.25);
+            border-radius: 30px;
+            padding: 8px 15px;
+            font-size: 10px;
+            font-weight: 800;
+            letter-spacing: 1px;
+        }
+
+        .image-actions {
+            display: flex;
+            gap: 9px;
+        }
+
+        .image-actions button {
+            flex: 1;
+            padding: 11px 5px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .choose-btn {
+            border: 0;
+            background: var(--orange);
+            color: white;
+        }
+
+        .remove-btn {
+            border: 1px solid var(--border);
+            background: transparent;
+            color: #ff9696;
+        }
+
+        button:disabled {
+            opacity: .6;
+            cursor: not-allowed !important;
+        }
+
+        .sidebar hr {
+            border: 0;
+            border-top: 1px solid var(--border);
+            margin: 23px 0;
+        }
+
+        .nav-links {
+            display: grid;
+            gap: 8px;
+        }
+
+        .nav-links a {
+            display: flex;
+            gap: 13px;
+            align-items: center;
+            padding: 13px;
+            border-radius: 12px;
+            color: #c3cddd;
+            text-decoration: none;
+            font-size: 13px;
+            transition: .3s;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: rgba(255,116,23,.14);
+            color: white;
+            transform: translateX(4px);
+        }
+
+        .nav-icon {
+            font-size: 18px;
+        }
+
+        .content {
+            display: grid;
+            gap: 22px;
+            min-width: 0;
+            animation: fadeUp .9s ease;
+        }
+
+        .section {
+            padding: 27px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 24px;
+        }
+
+        .section-header h2 {
+            font-family: 'Outfit',sans-serif;
+            font-size: 20px;
+        }
+
+        .section-header p {
+            color: var(--muted);
+            font-size: 12px;
+            margin-top: 5px;
+        }
+
+        .edit-btn {
+            border: 1px solid rgba(255,116,23,.4);
+            background: rgba(255,116,23,.1);
+            color: #ffad78;
+            padding: 10px 15px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .edit-btn:hover {
+            background: var(--orange);
+            color: white;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2,minmax(0,1fr));
+            gap: 18px;
+        }
+
+        .field {
+            min-width: 0;
+        }
+
+        .field label {
+            display: block;
+            color: #aeb9ca;
+            font-size: 11px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255,255,255,.055);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            color: white;
+            outline: none;
+            font-family: inherit;
+            font-size: 13px;
+            transition: .25s;
+        }
+
+        .field input:focus {
+            border-color: var(--orange);
+            box-shadow: 0 0 0 3px rgba(255,116,23,.10);
+        }
+
+        .field input:disabled {
+            opacity: .8;
+            cursor: not-allowed;
+        }
+
+        .readonly-note {
+            color: var(--muted);
+            font-size: 10px;
+            margin-top: 7px;
+        }
+
+        .form-actions {
+            display: none;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 22px;
+        }
+
+        .form-actions.show {
+            display: flex;
+        }
+
+        .form-actions button {
+            padding: 11px 20px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .cancel-btn {
+            border: 1px solid var(--border);
+            background: transparent;
+            color: white;
+        }
+
+        .save-btn {
+            border: none;
+            color: white;
+            background: linear-gradient(135deg,#ff7417,#ff9b43);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3,minmax(0,1fr));
+            gap: 14px;
+        }
+
+        .stat-card {
+            padding: 19px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,.035);
+            transition: .3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(255,116,23,.4);
+        }
+
+        .stat-card .icon {
+            font-size: 22px;
+        }
+
+        .stat-card h3 {
+            font-family: 'Outfit',sans-serif;
+            font-size: 25px;
+            margin: 9px 0 3px;
+            overflow-wrap: anywhere;
+        }
+
+        .stat-card p {
+            color: var(--muted);
+            font-size: 11px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 15px;
+            border: 1px dashed var(--border);
+            border-radius: 14px;
+            color: var(--muted);
+        }
+
+        .empty-state div {
+            font-size: 35px;
+            margin-bottom: 10px;
+        }
+
+        .empty-state p {
+            font-size: 12px;
+            margin-top: 7px;
+        }
+
+        .empty-state a {
+            display: inline-block;
+            margin-top: 13px;
+            color: var(--orange-light);
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .alert {
+            display: none;
+            padding: 13px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+        }
+
+        .alert.show {
+            display: block;
+        }
+
+        .alert.success {
+            background: rgba(39,174,96,.13);
+            color: #8ce5b2;
+        }
+
+        .alert.error {
+            background: rgba(231,76,60,.13);
+            color: #ffaaaa;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(22px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media(max-width:950px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: static;
+            }
+
+            .nav-links {
+                grid-template-columns: repeat(3,1fr);
+            }
+
+            .nav-links a {
+                justify-content: center;
+                font-size: 11px;
+            }
+        }
+
+        @media(max-width:600px) {
+            .header {
+                min-height: 72px;
+                padding: 10px 4%;
+            }
+
+            .logo img {
+                width: 110px;
+            }
+
+            .header-user-info {
+                display: none;
+            }
+
+            .container {
+                padding: 28px 4% 45px;
+            }
+
+            .section {
+                padding: 19px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px 8px;
+            }
+
+            .stat-card h3 {
+                font-size: 19px;
+            }
+
+            .stat-card p {
+                font-size: 9px;
+            }
+
+            .nav-links {
+                grid-template-columns: repeat(2,1fr);
+            }
+
+            .section-header {
+                align-items: flex-start;
+            }
+
+            .edit-btn {
+                padding: 9px 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+{% set user_name = user.get('full_name') or 'Traveler' %}
+{% set user_email = user.get('email') or '' %}
+{% set profile_image = user.get('profile_image') or '' %}
+
+<!-- HEADER -->
+<header class="header">
+
+    <a href="{{ url_for('index') }}" class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}"
+             alt="Travel India">
+    </a>
+
+    <div class="header-right">
+
+        <div class="header-profile">
+
+            <div class="header-avatar" id="headerAvatar">
+                {% if profile_image %}
+                    <img src="{{ url_for('static', filename=profile_image) }}"
+                         alt="Profile">
+                {% else %}
+                    {{ user_name[0]|upper }}
+                {% endif %}
+            </div>
+
+            <div class="header-user-info">
+                <h4>{{ user_name }}</h4>
+                <p>{{ user_email }}</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</header>
+
+
+<main class="container">
+
+    <div class="page-heading">
+        <span>YOUR TRAVEL IDENTITY</span>
+        <h1>My <b>Profile.</b></h1>
+        <p>Manage your personal details and explore your travel memories.</p>
+    </div>
+
+    <div class="alert" id="alertBox" role="alert"></div>
+
+    <div class="layout">
+
+        <!-- SIDEBAR -->
+        <aside class="glass sidebar">
+
+            <div class="avatar-wrapper">
+
+                <div class="avatar-ring">
+
+                    {% if profile_image %}
+
+                        <img id="profilePreview"
+                             src="{{ url_for('static', filename=profile_image) }}"
+                             alt="Profile image">
+
+                        <div class="fallback-avatar hidden"
+                             id="profileFallback">
+                            {{ user_name[0]|upper }}
+                        </div>
+
+                    {% else %}
+
+                        <div class="fallback-avatar" id="profileFallback">
+                            {{ user_name[0]|upper }}
+                        </div>
+
+                        <img id="profilePreview"
+                             src=""
+                             alt="Profile image"
+                             class="hidden">
+
+                    {% endif %}
+
+                    <button type="button"
+                            class="camera-button"
+                            onclick="document.getElementById('profileImageInput').click()"
+                            aria-label="Change profile image">
+                        ✎
+                    </button>
+
+                </div>
+
+            </div>
+
+            <h2 id="sidebarName">{{ user_name }}</h2>
+            <p class="sidebar-email">{{ user_email }}</p>
+
+            <div class="member">✦ TRAVEL INDIA MEMBER</div>
+
+            <input type="file"
+                   id="profileImageInput"
+                   class="hidden"
+                   accept="image/jpeg,image/png,image/webp"
+                   onchange="uploadProfileImage(this)">
+
+            <div class="image-actions">
+
+                <button type="button"
+                        class="choose-btn"
+                        onclick="document.getElementById('profileImageInput').click()">
+                    + Choose File
+                </button>
+
+                <button type="button"
+                        class="remove-btn"
+                        id="removeImageButton"
+                        onclick="removeProfileImage()">
+                    Remove
+                </button>
+
+            </div>
+
+            <hr>
+
+            <nav class="nav-links">
+
+                <a href="#personal-details" class="active">
+                    <span class="nav-icon">♙</span> My Details
+                </a>
+
+                <a href="#activity">
+                    <span class="nav-icon">✧</span> My Activity
+                </a>
+
+                <a href="#wishlist">
+                    <span class="nav-icon">♡</span> Wishlist
+                </a>
+
+                <a href="#recently-viewed">
+                    <span class="nav-icon">◷</span> Recently Viewed
+                </a>
+
+                <a href="{{ url_for('index') }}">
+                    <span class="nav-icon">⌂</span> Home
+                </a>
+
+                <a href="{{ url_for('logout') }}">
+                    <span class="nav-icon">⇥</span> Logout
+                </a>
+
+            </nav>
+
+        </aside>
+
+
+        <!-- MAIN CONTENT -->
+        <section class="content">
+
+            <!-- PERSONAL DETAILS -->
+            <section class="glass section" id="personal-details">
+
+                <div class="section-header">
+
+                    <div>
+                        <h2>Personal Information</h2>
+                        <p>Your personal details and account information.</p>
+                    </div>
+
+                    <button type="button"
+                            class="edit-btn"
+                            id="editButton"
+                            onclick="enableEditing()">
+                        ✎ Edit Details
+                    </button>
+
+                </div>
+
+                <form id="profileForm"
+                      method="POST"
+                      action="{{ url_for('update_profile') }}">
+
+                    <input type="hidden"
+                           name="csrf_token"
+                           value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+                    <div class="form-grid">
+
+                        <div class="field">
+
+                            <label for="full_name">FULL NAME</label>
+
+                            <input type="text"
+                                   id="full_name"
+                                   name="full_name"
+                                   value="{{ user_name }}"
+                                   maxlength="100"
+                                   autocomplete="name"
+                                   required
+                                   disabled>
+
+                        </div>
+
+                        <div class="field">
+
+                            <label for="email">EMAIL ADDRESS</label>
+
+                            <input type="email"
+                                   id="email"
+                                   value="{{ user_email }}"
+                                   disabled>
+
+                            <p class="readonly-note">
+                                Your registered email address.
+                            </p>
+
+                        </div>
+
+                        <div class="field">
+
+                            <label for="auth_provider">LOGIN METHOD</label>
+
+                            <input type="text"
+                                   id="auth_provider"
+                                   value="{{ user.get('auth_provider') or 'Email account' }}"
+                                   disabled>
+
+                        </div>
+
+                        <div class="field">
+
+                            <label for="created_at">MEMBER SINCE</label>
+
+                            <input type="text"
+                                   id="created_at"
+                                   value="{{ user.get('created_at') or 'Not available' }}"
+                                   disabled>
+
+                        </div>
+
+                    </div>
+
+                    <div class="form-actions" id="formActions">
+
+                        <button type="button"
+                                class="cancel-btn"
+                                onclick="cancelEditing()">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                class="save-btn">
+                            ✓ Save Details
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </section>
+
+
+            <!-- ACTIVITY -->
+            <section class="glass section" id="activity">
+
+                <div class="section-header">
+                    <div>
+                        <h2>Your Travel Activity</h2>
+                        <p>Your saved and explored destinations.</p>
+                    </div>
+                </div>
+
+                <div class="stats">
+
+                    <div class="stat-card">
+                        <div class="icon">♡</div>
+                        <h3>{{ wishlist|length }}</h3>
+                        <p>Wishlist Places</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="icon">◷</div>
+                        <h3>{{ recently_viewed|length }}</h3>
+                        <p>Places Viewed</p>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="icon">✈</div>
+                        <h3>India</h3>
+                        <p>Your Destination</p>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- WISHLIST -->
+            <section class="glass section" id="wishlist">
+
+                <div class="section-header">
+                    <div>
+                        <h2>♡ My Wishlist</h2>
+                        <p>Your favourite destinations.</p>
+                    </div>
+                </div>
+
+                {% if wishlist %}
+
+                    <div class="empty-state">
+                        <div>♡</div>
+                        <strong>Wishlist destinations will appear here.</strong>
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <div>♡</div>
+                        <strong>Your wishlist is waiting!</strong>
+                        <p>Explore destinations and save your favourite places.</p>
+                        <a href="{{ url_for('index') }}">
+                            Explore destinations →
+                        </a>
+                    </div>
+
+                {% endif %}
+
+            </section>
+
+
+            <!-- RECENTLY VIEWED -->
+            <section class="glass section" id="recently-viewed">
+
+                <div class="section-header">
+                    <div>
+                        <h2>◷ Recently Viewed</h2>
+                        <p>Destinations you explored recently.</p>
+                    </div>
+                </div>
+
+                {% if recently_viewed %}
+
+                    <div class="empty-state">
+                        <div>◷</div>
+                        <strong>Your recently viewed destinations will appear here.</strong>
+                    </div>
+
+                {% else %}
+
+                    <div class="empty-state">
+                        <div>◷</div>
+                        <strong>No recently viewed places</strong>
+                        <p>Your explored destinations will appear here.</p>
+                        <a href="{{ url_for('index') }}">
+                            Explore India →
+                        </a>
+                    </div>
+
+                {% endif %}
+
+            </section>
+
+        </section>
+
+    </div>
+
+</main>
+
+
+<script>
+
+    const profileForm = document.getElementById("profileForm");
+    const formActions = document.getElementById("formActions");
+    const editButton = document.getElementById("editButton");
+
+    const profileImageInput =
+        document.getElementById("profileImageInput");
+
+
+    // -----------------------------------------------------
+    // ALERT MESSAGE
+    // -----------------------------------------------------
+
+    function showAlert(message, type = "success") {
+
+        const box = document.getElementById("alertBox");
+
+        box.textContent = message;
+        box.className = "alert show " + type;
+
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth"
+        });
+
+        setTimeout(() => {
+            box.classList.remove("show");
+        }, 4000);
+    }
+
+
+    // -----------------------------------------------------
+    // ENABLE EDITING
+    // -----------------------------------------------------
+
+    function enableEditing() {
+
+        const nameField =
+            profileForm.querySelector('[name="full_name"]');
+
+        nameField.disabled = false;
+        nameField.focus();
+
+        formActions.classList.add("show");
+        editButton.style.display = "none";
+    }
+
+
+    // -----------------------------------------------------
+    // CANCEL EDITING
+    // -----------------------------------------------------
+
+    function cancelEditing() {
+
+        profileForm.reset();
+
+        const nameField =
+            profileForm.querySelector('[name="full_name"]');
+
+        nameField.disabled = true;
+
+        formActions.classList.remove("show");
+        editButton.style.display = "block";
+    }
+
+
+    // -----------------------------------------------------
+    // UPDATE PROFILE
+    // -----------------------------------------------------
+
+    profileForm.addEventListener("submit", async function(event) {
+
+        event.preventDefault();
+
+        const button =
+            profileForm.querySelector(".save-btn");
+
+        button.disabled = true;
+        button.textContent = "Saving...";
+
+        try {
+
+            const response = await fetch(profileForm.action, {
+                method: "POST",
+                body: new FormData(profileForm),
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message || "Unable to update profile."
+                );
+            }
+
+            const updatedName = result.full_name;
+
+            document.getElementById("sidebarName").textContent =
+                updatedName;
+
+            profileForm.querySelector('[name="full_name"]').value =
+                updatedName;
+
+            showAlert(
+                result.message || "Profile updated successfully!"
+            );
+
+            cancelEditing();
+
+        } catch (error) {
+
+            showAlert(error.message, "error");
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "✓ Save Details";
+
+        }
+
+    });
+
+
+    // -----------------------------------------------------
+    // UPLOAD PROFILE IMAGE
+    // -----------------------------------------------------
+
+    async function uploadProfileImage(input) {
+
+        const file = input.files[0];
+
+        if (!file) return;
+
+        const allowedTypes = [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+        ];
+
+        if (!allowedTypes.includes(file.type)) {
+
+            showAlert(
+                "Please select JPG, PNG or WEBP image.",
+                "error"
+            );
+
+            input.value = "";
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+
+            showAlert(
+                "Image size must be below 5 MB.",
+                "error"
+            );
+
+            input.value = "";
+            return;
+        }
+
+        const formData = new FormData();
+
+        formData.append("profile_image", file);
+
+        const csrf = document.querySelector(
+            '[name="csrf_token"]'
+        );
+
+        if (csrf) {
+            formData.append("csrf_token", csrf.value);
+        }
+
+        const button = document.querySelector(".choose-btn");
+
+        button.disabled = true;
+        button.textContent = "Uploading...";
+
+        try {
+
+            const response = await fetch(
+                "{{ url_for('upload_profile_image') }}",
+                {
+                    method: "POST",
+                    body: formData,
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+
+                throw new Error(
+                    result.message || "Image upload failed."
+                );
+
+            }
+
+            const imageUrl =
+                result.image_url + "?t=" + Date.now();
+
+            const preview =
+                document.getElementById("profilePreview");
+
+            const fallback =
+                document.getElementById("profileFallback");
+
+            preview.src = imageUrl;
+            preview.classList.remove("hidden");
+
+            fallback.classList.add("hidden");
+
+            const headerAvatar =
+                document.getElementById("headerAvatar");
+
+            headerAvatar.innerHTML = "";
+
+            const image = document.createElement("img");
+
+            image.src = imageUrl;
+            image.alt = "Profile";
+
+            headerAvatar.appendChild(image);
+
+            showAlert(
+                result.message || "Profile image updated successfully!"
+            );
+
+        } catch (error) {
+
+            showAlert(error.message, "error");
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "+ Choose File";
+
+            input.value = "";
+
+        }
+
+    }
+
+
+    // -----------------------------------------------------
+    // REMOVE PROFILE IMAGE
+    // -----------------------------------------------------
+
+    async function removeProfileImage() {
+
+        if (!confirm("Do you want to remove your profile image?")) {
+            return;
+        }
+
+        const button =
+            document.getElementById("removeImageButton");
+
+        button.disabled = true;
+        button.textContent = "Removing...";
+
+        try {
+
+            const csrf = document.querySelector(
+                '[name="csrf_token"]'
+            );
+
+            const headers = {
+                "X-Requested-With": "XMLHttpRequest"
+            };
+
+            if (csrf) {
+                headers["X-CSRFToken"] = csrf.value;
+            }
+
+            const response = await fetch(
+                "{{ url_for('remove_profile_image') }}",
+                {
+                    method: "POST",
+                    headers: headers,
+                    body: new URLSearchParams({
+                        csrf_token: csrf ? csrf.value : ""
+                    })
+                }
+            );
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+
+                throw new Error(
+                    result.message || "Unable to remove image."
+                );
+
+            }
+
+            showAlert(
+                result.message || "Profile image removed successfully!"
+            );
+
+            location.reload();
+
+        } catch (error) {
+
+            showAlert(error.message, "error");
+
+        } finally {
+
+            button.disabled = false;
+            button.textContent = "Remove";
+
+        }
+
+    }
+
+
+    // -----------------------------------------------------
+    // SIDEBAR ACTIVE NAVIGATION
+    // -----------------------------------------------------
+
+    document.querySelectorAll(".nav-links a[href^='#']")
+        .forEach(link => {
+
+            link.addEventListener("click", function() {
+
+                document.querySelectorAll(".nav-links a")
+                    .forEach(item => {
+                        item.classList.remove("active");
+                    });
+
+                this.classList.add("active");
+
+            });
+
+        });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Travel India | Explore Incredible India</title>
+<meta name="description" content="Explore India's beautiful destinations, temples, beaches, waterfalls, heritage sites and more.">
+<meta name="theme-color" content="#071c3d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+<style>
+
+:root {
+    --blue:#1769e0;
+    --sky:#69baff;
+    --dark-blue:#092c60;
+    --navy:#071c3d;
+    --light-blue:#eaf3ff;
+    --gold:#ffcf6b;
+    --text:#172b4d;
+    --muted:#75849a;
+    --border:#e7edf5;
+    --shadow:0 15px 45px rgba(18,57,105,.09);
+}
+
+* {
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    -webkit-tap-highlight-color:transparent;
+}
+
+html { scroll-padding-top:20px; }
+html:not(.lenis) { scroll-behavior:smooth; }
+html.lenis, html.lenis body { height:auto; }
+.lenis.lenis-smooth { scroll-behavior:auto!important; }
+.lenis.lenis-stopped { overflow:hidden; }
+
+body {
+    font-family:'DM Sans',sans-serif;
+    background:#fff;
+    color:var(--text);
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+}
+
+button,input,select,textarea { font:inherit; }
+button { cursor:pointer; }
+a { text-decoration:none; color:inherit; }
+img { max-width:100%; display:block; }
+
+.scroll-progress {
+    position:fixed;
+    top:0;
+    left:0;
+    height:3px;
+    width:100%;
+    transform-origin:0 50%;
+    transform:scaleX(0);
+    background:linear-gradient(90deg,#1769e0,#69baff,#ffcf6b);
+    z-index:5000;
+    pointer-events:none;
+}
+
+.section { padding:100px 7%; }
+
+.section-heading {
+    text-align:center;
+    margin-bottom:55px;
+}
+
+.section-heading .eyebrow {
+    display:inline-block;
+    color:var(--blue);
+    background:var(--light-blue);
+    border-radius:50px;
+    padding:9px 19px;
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:1.5px;
+    margin-bottom:15px;
+    text-transform:uppercase;
+}
+
+.section-heading h2 {
+    font-family:'Outfit',sans-serif;
+    font-size:clamp(30px,4.2vw,46px);
+    color:var(--navy);
+    font-weight:800;
+    margin-bottom:12px;
+    line-height:1.15;
+}
+
+.section-heading p {
+    color:var(--muted);
+    font-size:15px;
+    line-height:1.7;
+    max-width:560px;
+    margin:0 auto;
+}
+
+/* ============ HEADER ============ */
+
+.header {
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    z-index:1000;
+    height:88px;
+    padding:0 5%;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:center;
+    gap:30px;
+    background:transparent;
+    border:none;
+    box-shadow:none;
+    transition:background .45s,height .45s,box-shadow .45s,backdrop-filter .45s;
+}
+
+.header.scrolled {
+    height:74px;
+    background:rgba(5,20,46,.58);
+    backdrop-filter:blur(18px);
+    -webkit-backdrop-filter:blur(18px);
+    box-shadow:0 8px 30px rgba(0,0,0,.18);
+}
+
+.brand {
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-shrink:0;
+}
+
+/* UPDATED LOGO SIZE */
+
+.brand img {
+    width:72px;
+    height:72px;
+    object-fit:contain;
+    object-position:center;
+    display:block;
+    flex-shrink:0;
+    border-radius:13px;
+}
+
+.brand-text {
+    font-family:'Outfit',sans-serif;
+    font-size:23px;
+    font-weight:900;
+    color:#fff;
+    text-shadow:0 2px 14px rgba(0,0,0,.5);
+}
+
+.brand-text span { color:var(--sky); }
+
+.hero-navigation {
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:40px;
+}
+
+.hero-navigation a {
+    position:relative;
+    color:#fff;
+    font-size:13px;
+    font-weight:700;
+    letter-spacing:1.4px;
+    padding:8px 2px;
+    background:none;
+    border:none;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);
+    transition:color .35s,transform .35s,text-shadow .35s;
+    white-space:nowrap;
+}
+
+.hero-navigation a::after {
+    content:'';
+    position:absolute;
+    left:50%;
+    bottom:-3px;
+    height:2px;
+    width:100%;
+    background:linear-gradient(90deg,transparent,var(--sky),var(--gold),transparent);
+    transform:translateX(-50%) scaleX(0);
+    transition:transform .4s cubic-bezier(.2,.8,.2,1);
+}
+
+.hero-navigation a:hover,
+.hero-navigation a.active {
+    color:#9fd4ff;
+    transform:translateY(-3px);
+    text-shadow:0 0 20px rgba(105,186,255,.95),0 2px 10px rgba(0,0,0,.5);
+}
+
+.hero-navigation a:hover::after,
+.hero-navigation a.active::after {
+    transform:translateX(-50%) scaleX(1);
+}
+
+.header-right {
+    display:flex;
+    align-items:center;
+    gap:18px;
+}
+
+.notification {
+    position:relative;
+    border:1px solid rgba(255,255,255,.35);
+    width:43px;
+    height:43px;
+    border-radius:50%;
+    background:transparent;
+    color:#fff;
+    font-size:17px;
+    transition:.3s;
+}
+
+.notification:hover {
+    background:rgba(255,255,255,.16);
+    color:#9fd4ff;
+    transform:translateY(-3px);
+    border-color:var(--sky);
+}
+
+.notification-dot {
+    position:absolute;
+    width:8px;
+    height:8px;
+    background:#ff5353;
+    border:2px solid #0a2146;
+    border-radius:50%;
+    top:8px;
+    right:9px;
+}
+
+.profile-wrapper { position:relative; }
+
+.profile-trigger {
+    display:flex;
+    align-items:center;
+    gap:11px;
+    border:none;
+    background:transparent;
+    text-align:left;
+    color:#fff;
+    transition:transform .3s;
+}
+
+.profile-trigger:hover { transform:translateY(-3px); }
+
+.profile-avatar {
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#1769e0,#64b5ff);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:#fff;
+    font-weight:800;
+    font-size:19px;
+    overflow:hidden;
+    border:2px solid rgba(255,255,255,.55);
+}
+
+.profile-avatar img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.profile-info strong {
+    display:block;
+    font-size:13px;
+    color:#fff;
+    max-width:150px;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);
+}
+
+.profile-info small {
+    display:block;
+    color:rgba(255,255,255,.75);
+    font-size:11px;
+    margin-top:4px;
+    max-width:150px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);
+}
+
+.profile-trigger>i {
+    color:#fff;
+    font-size:12px;
+    transition:.3s;
+}
+
+.profile-wrapper.open .profile-trigger>i {
+    transform:rotate(180deg);
+}
+
+.profile-menu {
+    position:absolute;
+    top:66px;
+    right:0;
+    width:235px;
+    padding:12px;
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:17px;
+    box-shadow:var(--shadow);
+    visibility:hidden;
+    opacity:0;
+    transform:translateY(12px);
+    transition:.25s;
+}
+
+.profile-wrapper.open .profile-menu {
+    visibility:visible;
+    opacity:1;
+    transform:translateY(0);
+}
+
+.profile-menu a {
+    display:flex;
+    align-items:center;
+    gap:13px;
+    padding:13px;
+    border-radius:10px;
+    font-size:13px;
+    color:#455873;
+    transition:.2s;
+}
+
+.profile-menu a:hover {
+    background:var(--light-blue);
+    color:var(--blue);
+}
+
+.profile-menu .logout-link { color:#e34b5a; }
+
+/* ============ HERO ============ */
+
+.hero {
+    position:relative;
+    min-height:max(720px,100svh);
+    overflow:hidden;
+    background:#061d40;
+    display:flex;
+    isolation:isolate;
+}
+
+.hero-video {
+    position:absolute;
+    inset:-6% 0;
+    width:100%;
+    height:112%;
+    object-fit:cover;
+    z-index:-2;
+    will-change:transform;
+}
+
+.hero-overlay {
+    position:absolute;
+    inset:0;
+    z-index:-1;
+    pointer-events:none;
+    background:linear-gradient(180deg,rgba(3,15,35,.6) 0%,rgba(3,15,35,.08) 28%,rgba(3,15,35,.14) 55%,rgba(3,15,35,.85) 100%);
+}
+
+.hero-inner {
+    position:relative;
+    z-index:5;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    padding-top:88px;
+}
+
+.hero-copy {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:30px 7% 20px;
+    color:#fff;
+}
+
+.hero-kicker {
+    font-size:12px;
+    font-weight:800;
+    letter-spacing:6px;
+    color:var(--gold);
+    text-shadow:0 2px 12px rgba(0,0,0,.6);
+    margin-bottom:18px;
+}
+
+.hero-title {
+    font-family:'Outfit',sans-serif;
+    font-weight:900;
+    line-height:1.05;
+    font-size:clamp(38px,7vw,86px);
+    text-shadow:0 6px 40px rgba(0,0,0,.55);
+    perspective:900px;
+}
+
+.hero-title .line {
+    display:block;
+    overflow:hidden;
+    padding-bottom:.08em;
+}
+
+.hero-title .line>span {
+    display:inline-block;
+    will-change:transform;
+}
+
+.hero-title em {
+    font-style:normal;
+    background:linear-gradient(100deg,#8fd0ff,#fff 45%,#ffcf6b);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+}
+
+.hero-search {
+    width:100%;
+    max-width:1120px;
+    margin:0 auto;
+    padding:0 7% 82px;
+    color:#fff;
+}
+
+.search-title {
+    margin-bottom:8px;
+    text-align:left;
+}
+
+.search-title h2 {
+    font-family:'Outfit',sans-serif;
+    font-size:clamp(22px,2.6vw,30px);
+    text-shadow:0 3px 18px rgba(0,0,0,.6);
+}
+
+.search-title p {
+    color:rgba(255,255,255,.85);
+    font-size:13px;
+    margin-top:6px;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);
+}
+
+.category-chip {
+    display:none;
+    align-items:center;
+    gap:8px;
+    margin-top:12px;
+    color:var(--gold);
+    font-size:13px;
+    font-weight:700;
+    text-shadow:0 2px 10px rgba(0,0,0,.6);
+}
+
+.category-chip.show { display:inline-flex; }
+
+.category-chip button {
+    border:none;
+    background:none;
+    color:#fff;
+    font-size:15px;
+    opacity:.8;
+    transition:.2s;
+}
+
+.category-chip button:hover {
+    opacity:1;
+    transform:scale(1.2);
+}
+
+.search-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr auto;
+    gap:28px;
+    align-items:end;
+    margin-top:18px;
+}
+
+.field { position:relative; }
+
+.field label {
+    display:block;
+    font-size:11px;
+    font-weight:800;
+    letter-spacing:1.6px;
+    color:rgba(255,255,255,.9);
+    margin-bottom:8px;
+    transition:color .3s;
+    text-shadow:0 2px 8px rgba(0,0,0,.6);
+}
+
+.field label i {
+    margin-right:6px;
+    color:var(--sky);
+}
+
+.field:hover label,
+.field:focus-within label {
+    color:var(--sky);
+}
+
+/* Select */
+
+.field select {
+    width:100%;
+    height:56px;
+    color-scheme:dark;
+    background:rgba(6,24,54,.55);
+    backdrop-filter:blur(10px);
+    -webkit-backdrop-filter:blur(10px);
+    border:1.5px solid rgba(255,255,255,.4);
+    border-radius:14px;
+    color:#fff;
+    -webkit-text-fill-color:#fff;
+    opacity:1;
+    font-size:16px;
+    font-weight:700;
+    letter-spacing:.2px;
+    outline:none;
+    cursor:pointer;
+    padding:0 42px 0 18px;
+    -webkit-appearance:none;
+    appearance:none;
+    text-overflow:ellipsis;
+    transition:border-color .3s,box-shadow .3s,background .3s;
+}
+
+.field select:hover,
+.field select:focus {
+    border-color:var(--sky);
+    background:rgba(8,32,72,.7);
+    box-shadow:0 0 0 4px rgba(105,186,255,.18),0 10px 28px rgba(0,0,0,.25);
+}
+
+.field select:disabled {
+    opacity:.6;
+    cursor:not-allowed;
+    -webkit-text-fill-color:rgba(255,255,255,.75);
+}
+
+.field select option,
+.field select optgroup {
+    background:#0b2a57;
+    color:#fff;
+    font-size:15px;
+    font-weight:600;
+}
+
+.field select optgroup {
+    color:var(--gold);
+    font-weight:800;
+    font-style:normal;
+}
+
+.field .caret {
+    position:absolute;
+    right:18px;
+    bottom:21px;
+    color:#fff;
+    font-size:12px;
+    pointer-events:none;
+    transition:transform .3s;
+}
+
+.field:focus-within .caret {
+    transform:rotate(180deg);
+    color:var(--sky);
+}
+
+.search-button {
+    height:56px;
+    min-width:190px;
+    padding:0 28px;
+    border:none;
+    border-radius:50px;
+    background:linear-gradient(120deg,#1262d9,#3c92ff);
+    color:#fff;
+    font-weight:800;
+    font-size:14px;
+    letter-spacing:.4px;
+    box-shadow:0 10px 28px rgba(23,105,224,.45);
+    transition:transform .3s,box-shadow .3s;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+}
+
+.search-button:hover {
+    transform:translateY(-4px) scale(1.03);
+    box-shadow:0 16px 36px rgba(23,105,224,.6);
+}
+
+.search-button i { transition:transform .3s; }
+
+.search-button:hover i {
+    transform:translateX(3px) rotate(-8deg);
+}
+
+.hero-bottom {
+    position:absolute;
+    bottom:22px;
+    left:50%;
+    transform:translateX(-50%);
+    z-index:6;
+    color:rgba(255,255,255,.8);
+    font-size:11px;
+    letter-spacing:4px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    pointer-events:none;
+    white-space:nowrap;
+}
+
+.hero-bottom i { animation:bounce 1.5s infinite; }
+
+@keyframes bounce {
+    0%,100% { transform:translateY(0); }
+    50% { transform:translateY(7px); }
+}
+
+/* ============ CATEGORIES ============ */
+
+.categories-section {
+    background:#fff;
+    perspective:1200px;
+}
+
+.categories-grid {
+    display:grid;
+    grid-template-columns:repeat(6,1fr);
+    gap:28px;
+    max-width:1250px;
+    margin:0 auto;
+}
+
+.category-item {
+    text-align:center;
+    cursor:pointer;
+    transition:transform .4s cubic-bezier(.2,.8,.2,1);
+}
+
+.category-image {
+    position:relative;
+    width:100%;
+    aspect-ratio:1;
+    border-radius:50%;
+    padding:7px;
+    background:linear-gradient(135deg,#d8eaff,#f2f7ff);
+    margin-bottom:16px;
+    box-shadow:0 12px 28px rgba(19,77,145,.1);
+    transition:box-shadow .4s,background .4s,transform .15s ease-out;
+    transform:perspective(700px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));
+}
+
+.category-image img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    border-radius:50%;
+    transition:transform .6s;
+}
+
+.category-item:hover { transform:translateY(-10px); }
+
+.category-item:hover .category-image {
+    box-shadow:0 22px 40px rgba(23,105,224,.28);
+    background:linear-gradient(135deg,#1769e0,#7abfff);
+}
+
+.category-item:hover img { transform:scale(1.1); }
+
+.category-item.selected .category-image {
+    background:linear-gradient(135deg,#1769e0,#ffcf6b);
+    box-shadow:0 22px 40px rgba(23,105,224,.32);
+}
+
+.category-item.selected h3 { color:var(--blue); }
+
+.category-item h3 {
+    font-family:'Outfit',sans-serif;
+    font-size:16px;
+    color:var(--navy);
+    transition:color .3s;
+}
+
+/* ============ STATES ============ */
+
+.states-section {
+    background:linear-gradient(180deg,#f6faff,#fff);
+}
+
+.group-title {
+    display:flex;
+    align-items:center;
+    gap:16px;
+    max-width:1400px;
+    margin:0 auto 26px;
+    font-family:'Outfit',sans-serif;
+    font-size:22px;
+    color:var(--navy);
+    font-weight:800;
+}
+
+.group-title::after {
+    content:'';
+    flex:1;
+    height:1px;
+    background:linear-gradient(90deg,#cfe0f6,transparent);
+}
+
+.group-title small {
+    font-family:'DM Sans',sans-serif;
+    font-size:12px;
+    font-weight:800;
+    color:var(--blue);
+    background:var(--light-blue);
+    padding:5px 12px;
+    border-radius:30px;
+}
+
+.group-title.ut { margin-top:70px; }
+
+.states-grid {
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:26px;
+    max-width:1400px;
+    margin:0 auto;
+    perspective:1400px;
+}
+
+.state-card {
+    position:relative;
+    display:block;
+    height:280px;
+    border-radius:22px;
+    overflow:hidden;
+    box-shadow:0 14px 34px rgba(9,44,96,.12);
+    transition:box-shadow .4s,transform .25s ease-out;
+    transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg)) translateY(var(--ty,0px));
+    background:#dfeaf8;
+    transform-style:preserve-3d;
+}
+
+.state-card img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transition:transform .8s cubic-bezier(.2,.8,.2,1);
+}
+
+.state-card::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    background:linear-gradient(0deg,rgba(2,19,44,.92),rgba(2,19,44,.15) 60%,transparent);
+}
+
+.state-card::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    z-index:3;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .4s;
+    background:radial-gradient(circle at var(--mx,50%) var(--my,50%),rgba(255,255,255,.28),transparent 45%);
+}
+
+.state-card:hover {
+    --ty:-10px;
+    box-shadow:0 28px 50px rgba(9,44,96,.28);
+}
+
+.state-card:hover img { transform:scale(1.14); }
+.state-card:hover::before { opacity:1; }
+
+.state-name {
+    position:absolute;
+    bottom:22px;
+    left:20px;
+    right:14px;
+    z-index:2;
+    color:#fff;
+    font-family:'Outfit',sans-serif;
+    font-size:20px;
+    font-weight:800;
+    line-height:1.2;
+    text-shadow:0 2px 12px rgba(0,0,0,.5);
+    transform:translateZ(40px);
+}
+
+.state-name span {
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:'DM Sans',sans-serif;
+    font-size:11px;
+    font-weight:600;
+    margin-top:8px;
+    color:#dceaff;
+    letter-spacing:.3px;
+    transition:gap .3s,color .3s;
+}
+
+.state-card:hover .state-name span {
+    gap:12px;
+    color:var(--gold);
+}
+
+/* ============ GLOBE ============ */
+
+.globe-section {
+    position:relative;
+    overflow:hidden;
+    text-align:center;
+    color:#fff;
+    padding:110px 7% 100px;
+    background:radial-gradient(1.5px 1.5px at 12% 20%,#fff,transparent),radial-gradient(1px 1px at 28% 70%,#cfe6ff,transparent),radial-gradient(1.5px 1.5px at 45% 12%,#fff,transparent),radial-gradient(1px 1px at 63% 82%,#fff,transparent),radial-gradient(1.5px 1.5px at 78% 30%,#cfe6ff,transparent),radial-gradient(1px 1px at 90% 66%,#fff,transparent),radial-gradient(ellipse at center,#10386f 0%,#061633 70%,#030c1f 100%);
+}
+
+.globe-section .section-heading h2 { color:#fff; }
+.globe-section .section-heading p { color:#c4d7f0; }
+.globe-section .eyebrow { background:rgba(255,255,255,.12); color:#8bc6ff; }
+
+.globe-stage {
+    position:relative;
+    width:min(560px,92vw);
+    aspect-ratio:1;
+    margin:0 auto;
+}
+
+.globe-stage::before {
+    content:'';
+    position:absolute;
+    inset:4%;
+    border-radius:50%;
+    background:radial-gradient(circle,rgba(60,150,255,.28),transparent 68%);
+    filter:blur(24px);
+}
+
+.globe-ring {
+    position:absolute;
+    inset:3%;
+    border-radius:50%;
+    border:1px dashed rgba(139,198,255,.28);
+    animation:spin 40s linear infinite;
+    pointer-events:none;
+}
+
+.globe-ring.two {
+    inset:-3%;
+    border-style:solid;
+    border-color:rgba(139,198,255,.12);
+    animation-duration:70s;
+    animation-direction:reverse;
+}
+
+@keyframes spin { to { transform:rotate(360deg); } }
+
+#globeCanvasWrap {
+    position:absolute;
+    inset:0;
+    cursor:grab;
+    touch-action:pan-y;
+}
+
+#globeCanvasWrap:active { cursor:grabbing; }
+
+#globeCanvasWrap canvas {
+    width:100%!important;
+    height:100%!important;
+    display:block;
+}
+
+.globe-hint {
+    margin-top:6px;
+    font-size:11px;
+    letter-spacing:3px;
+    color:#7fa7d6;
+}
+
+.globe-caption {
+    font-family:'Outfit',sans-serif;
+    font-size:17px;
+    color:#a9d7ff;
+    letter-spacing:3px;
+    margin-top:26px;
+}
+
+.globe-stats {
+    display:flex;
+    justify-content:center;
+    gap:60px;
+    margin-top:44px;
+    flex-wrap:wrap;
+}
+
+.globe-stats div strong {
+    display:block;
+    font-family:'Outfit',sans-serif;
+    font-size:40px;
+    font-weight:900;
+    color:#fff;
+}
+
+.globe-stats div span {
+    font-size:11px;
+    letter-spacing:2px;
+    color:#8bc6ff;
+    font-weight:700;
+}
+
+/* ============ REVIEWS ============ */
+
+.reviews-section { background:#f7faff; }
+
+.reviews-grid {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px;
+    max-width:1300px;
+    margin:0 auto;
+}
+
+.review-card {
+    padding:26px;
+    border-radius:20px;
+    background:#fff;
+    border:1px solid #e7edf6;
+    box-shadow:0 9px 30px rgba(9,44,96,.05);
+    transition:transform .35s,box-shadow .35s;
+}
+
+.review-card:hover {
+    transform:translateY(-8px);
+    box-shadow:0 22px 44px rgba(9,44,96,.12);
+}
+
+.review-user {
+    display:flex;
+    align-items:center;
+    gap:13px;
+    margin-bottom:17px;
+}
+
+.review-avatar {
+    width:46px;
+    height:46px;
+    border-radius:50%;
+    overflow:hidden;
+    background:var(--light-blue);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    color:var(--blue);
+    font-weight:800;
+    flex-shrink:0;
+}
+
+.review-avatar img {
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.review-user strong {
+    font-size:14px;
+    display:block;
+}
+
+.review-user small {
+    font-size:11px;
+    color:var(--muted);
+}
+
+.review-stars {
+    color:#ffb52e;
+    font-size:14px;
+    margin-bottom:12px;
+    letter-spacing:2px;
+}
+
+.review-card p {
+    color:#687a92;
+    font-size:13px;
+    line-height:1.8;
+}
+
+.no-reviews {
+    text-align:center;
+    color:var(--muted);
+    padding:25px;
+    grid-column:1/-1;
+}
+
+.no-reviews i {
+    font-size:30px;
+    color:#b9cde8;
+    margin-bottom:10px;
+}
+
+/* ============ FOOTER ============ */
+
+footer {
+    background:#061b39;
+    color:#fff;
+    padding:52px 7% 25px;
+    text-align:center;
+}
+
+footer .footer-brand {
+    font-family:'Outfit',sans-serif;
+    font-size:27px;
+    font-weight:900;
+    margin-bottom:12px;
+}
+
+footer .footer-brand span { color:#66b5ff; }
+
+footer p {
+    font-size:13px;
+    color:#afc3df;
+    line-height:1.8;
+}
+
+.footer-bottom {
+    border-top:1px solid rgba(255,255,255,.13);
+    margin-top:28px;
+    padding-top:20px;
+    font-size:11px;
+    color:#8ea9cc;
+}
+
+/* ============ REVIEW POPUP ============ */
+
+.review-modal {
+    position:fixed;
+    inset:0;
+    z-index:3000;
+    background:rgba(2,15,36,.72);
+    backdrop-filter:blur(9px);
+    -webkit-backdrop-filter:blur(9px);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:18px;
+    opacity:0;
+    visibility:hidden;
+    transition:.3s;
+}
+
+.review-modal.show {
+    opacity:1;
+    visibility:visible;
+}
+
+.review-box {
+    width:100%;
+    max-width:460px;
+    background:#fff;
+    padding:35px;
+    border-radius:25px;
+    text-align:center;
+    transform:translateY(25px) scale(.96);
+    transition:.35s;
+    position:relative;
+    max-height:90vh;
+    overflow-y:auto;
+}
+
+.review-modal.show .review-box {
+    transform:translateY(0) scale(1);
+}
+
+.review-icon {
+    width:67px;
+    height:67px;
+    background:linear-gradient(135deg,#dceeff,#f2f8ff);
+    border-radius:20px;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin:0 auto 17px;
+    color:var(--blue);
+    font-size:28px;
+}
+
+.review-box h2 {
+    font-family:'Outfit',sans-serif;
+    font-size:25px;
+    color:var(--navy);
+    margin-bottom:9px;
+}
+
+.review-box>p {
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.6;
+    margin-bottom:20px;
+}
+
+.rating-stars {
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin:20px 0;
+}
+
+.rating-stars button {
+    border:none;
+    background:none;
+    font-size:30px;
+    color:#d5dce6;
+    transition:.2s;
+}
+
+.rating-stars button.active,
+.rating-stars button:hover {
+    color:#ffb52e;
+    transform:scale(1.16);
+}
+
+.review-textarea {
+    width:100%;
+    height:110px;
+    padding:14px;
+    border:1px solid #dce5f1;
+    border-radius:13px;
+    outline:none;
+    resize:vertical;
+    font-size:13px;
+    background:#f9fbff;
+    margin-bottom:15px;
+}
+
+.review-textarea:focus { border-color:var(--blue); }
+
+.submit-review {
+    width:100%;
+    height:49px;
+    border:none;
+    border-radius:12px;
+    color:#fff;
+    background:linear-gradient(120deg,#1769e0,#4197ff);
+    font-weight:800;
+}
+
+.submit-review:disabled { opacity:.7; }
+
+.skip-review {
+    border:none;
+    background:transparent;
+    margin-top:16px;
+    color:#8795a9;
+    font-size:12px;
+    font-weight:700;
+}
+
+.review-message {
+    color:#e04a5b;
+    font-size:12px;
+    margin-bottom:10px;
+}
+
+/* ============ RESPONSIVE ============ */
+
+@media(max-width:1100px) {
+    .categories-grid {
+        grid-template-columns:repeat(3,1fr);
+        max-width:700px;
+    }
+
+    .states-grid { grid-template-columns:repeat(3,1fr); }
+    .hero-navigation { gap:24px; }
+    .profile-info,.profile-trigger>i { display:none; }
+}
+
+@media(max-width:900px) {
+    .header {
+        grid-template-columns:1fr auto;
+        height:auto;
+        padding:12px 4% 8px;
+        gap:6px 12px;
+    }
+
+    .header.scrolled { height:auto; }
+
+    .hero-navigation {
+        grid-column:1/-1;
+        grid-row:2;
+        justify-content:flex-start;
+        gap:22px;
+        overflow-x:auto;
+        white-space:nowrap;
+        scrollbar-width:none;
+        padding:4px 2px 6px;
+    }
+
+    .hero-navigation::-webkit-scrollbar { display:none; }
+
+    .hero-navigation a { font-size:11px; }
+    .hero-inner { padding-top:120px; }
+}
+
+@media(max-width:768px) {
+
+    /* UPDATED MOBILE LOGO */
+
+    .brand img {
+        width:55px;
+        height:55px;
+    }
+
+    .brand-text { font-size:19px; }
+    .header-right { gap:12px; }
+
+    .profile-avatar {
+        width:40px;
+        height:40px;
+    }
+
+    .notification {
+        width:39px;
+        height:39px;
+    }
+
+    .profile-menu { top:54px; }
+    .hero { min-height:100svh; }
+
+    .hero-copy { padding:30px 6% 10px; }
+
+    .hero-kicker {
+        letter-spacing:4px;
+        font-size:10px;
+    }
+
+    .hero-search { padding:0 6% 64px; }
+
+    .search-grid {
+        grid-template-columns:1fr;
+        gap:18px;
+    }
+
+    .search-button { width:100%; }
+
+    .hero-bottom {
+        bottom:18px;
+        font-size:10px;
+        letter-spacing:3px;
+    }
+
+    .section { padding:72px 5%; }
+    .section-heading { margin-bottom:38px; }
+
+    .categories-grid {
+        grid-template-columns:repeat(3,1fr);
+        gap:24px 14px;
+    }
+
+    .category-item h3 { font-size:13px; }
+
+    .states-grid {
+        grid-template-columns:repeat(2,1fr);
+        gap:14px;
+    }
+
+    .state-card {
+        height:220px;
+        border-radius:18px;
+    }
+
+    .state-name {
+        font-size:16px;
+        left:14px;
+        bottom:16px;
+    }
+
+    .state-name span { font-size:10px; }
+    .group-title { font-size:18px; }
+    .group-title.ut { margin-top:50px; }
+
+    .globe-section { padding:80px 5% 70px; }
+    .globe-stats { gap:30px; }
+
+    .globe-stats div strong { font-size:32px; }
+
+    .reviews-grid { grid-template-columns:1fr; }
+}
+
+@media(max-width:450px) {
+    .brand-text { font-size:17px; }
+    .header-right { gap:8px; }
+    .state-card { height:190px; }
+    .state-name { font-size:14px; }
+    .review-box { padding:25px 19px; }
+}
+
+@media(hover:none) {
+    .state-card:hover,
+    .category-item:hover {
+        --ty:0px;
+        transform:none;
+    }
+}
+
+@media(prefers-reduced-motion:reduce) {
+    *,*::before,*::after {
+        animation-duration:.01ms!important;
+        transition-duration:.01ms!important;
+    }
+}
+
+/* ============ SELECT OVERRIDES ============ */
+
+.field select {
+    color:#ffffff!important;
+    background-color:rgba(6,24,54,0.88);
+    -webkit-text-fill-color:#ffffff;
+    font-size:15px;
+    font-weight:700;
+    min-width:0;
+}
+
+.field select option {
+    background:#ffffff!important;
+    color:#102b50!important;
+    font-size:15px;
+    font-weight:600;
+    padding:12px;
+}
+
+.field select optgroup {
+    background:#eaf3ff!important;
+    color:#1769e0!important;
+    font-weight:800;
+}
+
+.field select:focus {
+    border-color:#69baff;
+    box-shadow:0 0 0 4px rgba(105,186,255,0.2);
+}
+
+</style>
+</head>
+
+<body>
+
+{% set display_name = user.full_name if user and user.full_name else 'Traveler' %}
+{% set first_letter = display_name[0]|upper %}
+{% set ut_list = [
+    'andaman and nicobar islands','andaman and nicobar','chandigarh',
+    'dadra and nagar haveli and daman and diu','dadra and nagar haveli','daman and diu',
+    'delhi','nct of delhi','national capital territory of delhi','new delhi',
+    'jammu and kashmir','ladakh','lakshadweep','puducherry','pondicherry'
+] %}
+
+<div class="scroll-progress" id="scrollProgress"></div>
+
+<!-- ================= HEADER (transparent, over hero video) ================= -->
+<header class="header" id="siteHeader">
+
+    <a href="{{ url_for('dashboard') }}" class="brand">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Travel India Logo"></a>
+
+    <nav class="hero-navigation" id="heroNav">
+        <a href="#home" class="active">HOME</a>
+        <a href="#categories">EXPERIENCES</a>
+        <a href="#explore-states">DESTINATIONS</a>
+        <a href="#globe">DISCOVER INDIA</a>
+        <a href="#reviews">REVIEWS</a>
+    </nav>
+
+    <div class="header-right">
+        <button class="notification" type="button" title="Notifications" aria-label="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            <span class="notification-dot"></span>
+        </button>
+
+        <div class="profile-wrapper" id="profileWrapper">
+            <button class="profile-trigger" id="profileTrigger" type="button" aria-label="Profile menu">
+                <div class="profile-avatar">
+
+    {% if user and user.profile_image %}
+
+        {% if user.profile_image.startswith('http://') or user.profile_image.startswith('https://') %}
+
+            <!-- Google Profile Image -->
+            <img
+                src="{{ user.profile_image }}"
+                alt="{{ display_name }} Profile"
+                referrerpolicy="no-referrer"
+                onerror="this.style.display='none'; this.parentElement.textContent='{{ first_letter }}';"
+            >
+
+        {% else %}
+
+            <!-- Uploaded Profile Image -->
+            <img
+                src="{{ url_for('static', filename=user.profile_image) }}"
+                alt="{{ display_name }} Profile"
+                onerror="this.style.display='none'; this.parentElement.textContent='{{ first_letter }}';"
+            >
+
+        {% endif %}
+
+    {% else %}
+
+        <!-- Default First Letter Avatar -->
+        {{ first_letter }}
+
+    {% endif %}
+
+</div>
+                <div class="profile-info">
+                    <strong>{{ display_name }}</strong>
+                    <small>{{ user.email if user else '' }}</small>
+                </div>
+                <i class="fa-solid fa-chevron-down"></i>
+            </button>
+
+            <div class="profile-menu">
+                <a href="{{ url_for('profile') }}"><i class="fa-regular fa-user"></i> My Profile</a>
+                <a href="{{ url_for('favourites') }}"><i class="fa-regular fa-heart"></i> Wishlist</a>
+                <a href="{{ url_for('profile') }}"><i class="fa-solid fa-gear"></i> Settings</a>
+                <a href="{{ url_for('logout') }}" class="logout-link"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </div>
+        </div>
+    </div>
+
+</header>
+
+<!-- ================= HERO ================= -->
+<section class="hero" id="home">
+
+    <video class="hero-video" id="heroVideo" autoplay muted loop playsinline preload="auto">
+        <source src="{{ url_for('static', filename='videos/dashboardintro.mp4') }}" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+
+    <div class="hero-inner" id="heroInner">
+
+        <div class="hero-copy">
+            <div class="hero-kicker">TRAVEL · CULTURE · HERITAGE</div>
+            <h1 class="hero-title">
+                <span class="line"><span>Discover the Soul of</span></span>
+                <span class="line"><span><em>Incredible India</em></span></span>
+            </h1>
+        </div>
+
+        <div class="hero-search" id="destination-search">
+
+            <div class="search-title">
+                <h2>Where do you want to explore?</h2>
+                <p>Choose your destination and discover incredible places across India.</p>
+                <div class="category-chip" id="categoryChip">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>Experience: <b id="categoryChipName"></b></span>
+                    <button type="button" id="clearCategory" aria-label="Clear category"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+
+            <form action="{{ url_for('tourist_places') }}" method="GET" id="destinationForm">
+                <input type="hidden" name="category" id="selectedCategory" value="">
+
+                <div class="search-grid">
+
+                    <div class="field">
+                        <label for="stateSelect"><i class="fa-solid fa-map-location-dot"></i>SELECT STATE / UT</label>
+                        <select name="state" id="stateSelect" required>
+                            <option value="">Choose a State or Union Territory</option>
+                            <optgroup label="STATES">
+                                {% for state in states %}
+                                    {% if (state.state_name|lower|replace('&','and')|trim) not in ut_list %}
+                                        <option value="{{ state.id }}">{{ state.state_name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </optgroup>
+                            <optgroup label="UNION TERRITORIES">
+                                {% for state in states %}
+                                    {% if (state.state_name|lower|replace('&','and')|trim) in ut_list %}
+                                        <option value="{{ state.id }}">{{ state.state_name }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </optgroup>
+                        </select>
+                        <i class="fa-solid fa-chevron-down caret"></i>
+                    </div>
+
+                    <div class="field">
+                        <label for="districtSelect"><i class="fa-solid fa-location-dot"></i>SELECT DISTRICT</label>
+                        <select name="district" id="districtSelect" disabled>
+                            <option value="">Select a state first</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down caret"></i>
+                    </div>
+
+                    <button class="search-button" type="submit">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                        Explore Places
+                    </button>
+
+                </div>
+            </form>
+
+        </div>
+    </div>
+
+    <div class="hero-bottom">
+        <span>SCROLL TO EXPLORE</span>
+        <i class="fa-solid fa-arrow-down"></i>
+    </div>
+
+</section>
+
+<!-- ================= EXPLORE BY CATEGORY ================= -->
+<section class="section categories-section" id="categories">
+
+    <div class="section-heading">
+        <span class="eyebrow">Discover Experiences</span>
+        <h2>Explore By Category</h2>
+        <p>Choose your favourite experience and discover amazing destinations.</p>
+    </div>
+
+    <div class="categories-grid">
+        <div class="category-item" data-category="Temple" tabindex="0" role="button" aria-label="Temples">
+            <div class="category-image tilt"><img src="{{ url_for('static', filename='images/temple.jpg') }}" alt="Temples" loading="lazy"></div>
+            <h3>Temples</h3>
+        </div>
+        <div class="category-item" data-category="Beach" tabindex="0" role="button" aria-label="Beaches">
+            <div class="category-image tilt"><img src="{{ url_for('static', filename='images/beach.jpg') }}" alt="Beaches" loading="lazy"></div>
+            <h3>Beaches</h3>
+        </div>
+        <div class="category-item" data-category="Hill Station" tabindex="0" role="button" aria-label="Hill Stations">
+            <div class="category-image tilt"><img src="{{ url_for('static', filename='images/hillstation.jpg') }}" alt="Hill Stations" loading="lazy"></div>
+            <h3>Hill Stations</h3>
+        </div>
+        <div class="category-item" data-category="Waterfall" tabindex="0" role="button" aria-label="Waterfalls">
+            <div class="category-image tilt"><img src="{{ url_for('static', filename='images/waterfall.jpg') }}" alt="Waterfalls" loading="lazy"></div>
+            <h3>Waterfalls</h3>
+        </div>
+        <div class="category-item" data-category="Wildlife" tabindex="0" role="button" aria-label="Wildlife">
+            <div class="category-image tilt"><img src="{{ url_for('static', filename='images/wildlife.jpg') }}" alt="Wildlife" loading="lazy"></div>
+            <h3>Wildlife</h3>
+        </div>
+        <div class="category-item" data-category="Adventure" tabindex="0" role="button" aria-label="Adventure">
+            <div class="category-image tilt"><img src="{{ url_for('static', filename='images/adventure.jpg') }}" alt="Adventure" loading="lazy"></div>
+            <h3>Adventure</h3>
+        </div>
+    </div>
+
+</section>
+
+<!-- ================= EXPLORE BY STATE ================= -->
+<section class="section states-section" id="explore-states">
+
+    <div class="section-heading">
+        <span class="eyebrow">Explore Incredible India</span>
+        <h2>Explore By State</h2>
+        <p>From the Himalayas to the Indian Ocean, discover every corner of India. Tap a card to see all tourist places.</p>
+    </div>
+
+    <div class="group-title">States <small id="stateCount"></small></div>
+    <div class="states-grid" id="statesGrid">
+        {% for state in states %}
+            {% set norm = state.state_name|lower|replace('&','and')|trim %}
+            {% if norm not in ut_list %}
+                {% set state_slug = state.state_name|lower|replace('&','and')|replace(' ','')|replace('.','')|replace(',','')|replace('-','')|replace("'",'') %}
+                <a class="state-card tilt-card" href="{{ url_for('tourist_places', state=state.id) }}" data-state-id="{{ state.id }}" aria-label="Explore {{ state.state_name }}">
+                    <img src="{{ url_for('static', filename='images/' ~ state_slug ~ '.jpg') }}" alt="{{ state.state_name }}" loading="lazy"
+                         onerror="this.onerror=null;this.src='https://placehold.co/600x400/eaf3ff/1769e0?text={{ state.state_name|urlencode }}'">
+                    <div class="state-name">{{ state.state_name }}<span>Discover destinations <i class="fa-solid fa-arrow-right"></i></span></div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+    <div class="group-title ut">Union Territories <small id="utCount"></small></div>
+    <div class="states-grid" id="utGrid">
+        {% for state in states %}
+            {% set norm = state.state_name|lower|replace('&','and')|trim %}
+            {% if norm in ut_list %}
+                {% set state_slug = state.state_name|lower|replace('&','and')|replace(' ','')|replace('.','')|replace(',','')|replace('-','')|replace("'",'') %}
+                <a class="state-card tilt-card" href="{{ url_for('tourist_places', state=state.id) }}" data-state-id="{{ state.id }}" aria-label="Explore {{ state.state_name }}">
+                    <img src="{{ url_for('static', filename='images/' ~ state_slug ~ '.jpg') }}" alt="{{ state.state_name }}" loading="lazy"
+                         onerror="this.onerror=null;this.src='https://placehold.co/600x400/eaf3ff/1769e0?text={{ state.state_name|urlencode }}'">
+                    <div class="state-name">{{ state.state_name }}<span>Discover destinations <i class="fa-solid fa-arrow-right"></i></span></div>
+                </a>
+            {% endif %}
+        {% endfor %}
+    </div>
+
+</section>
+
+<!-- ================= 3D GLOBE ================= -->
+<section class="globe-section" id="globe">
+    <div class="section-heading">
+        <span class="eyebrow">One Incredible Country</span>
+        <h2>Experience The Beauty Of India</h2>
+        <p>Every destination tells a story. Every journey creates a memory.</p>
+    </div>
+    <div class="globe-stage">
+        <div class="globe-ring"></div>
+        <div class="globe-ring two"></div>
+        <div id="globeCanvasWrap" aria-label="Rotating 3D globe focused on India"></div>
+    </div>
+    <div class="globe-hint">DRAG TO ROTATE</div>
+    <div class="globe-caption">DISCOVER · EXPLORE · EXPERIENCE</div>
+    <div class="globe-stats">
+        <div><strong data-count="28">0</strong><span>STATES</span></div>
+        <div><strong data-count="8">0</strong><span>UNION TERRITORIES</span></div>
+        <div><strong data-count="40">0</strong><span>UNESCO SITES</span></div>
+    </div>
+</section>
+
+<!-- ================= REVIEWS ================= -->
+<section class="section reviews-section" id="reviews">
+    <div class="section-heading">
+        <span class="eyebrow">Traveler Experiences</span>
+        <h2>What Our Travelers Say</h2>
+        <p>Real experiences and feedback from our Travel India community.</p>
+    </div>
+    <div class="reviews-grid" id="reviewsGrid">
+        <div class="no-reviews"><i class="fa-regular fa-comments"></i><p>Traveler reviews will appear here.</p></div>
+    </div>
+</section>
+
+<footer>
+    <div class="footer-brand">Travel<span>India.</span></div>
+    <p>Discover the beauty, culture, heritage and unforgettable destinations of India.<br>Your journey begins here.</p>
+    <div class="footer-bottom">© 2026 Travel India. All Rights Reserved.</div>
+</footer>
+
+<!-- ================= REVIEW POPUP ================= -->
+<div class="review-modal" id="reviewModal">
+    <div class="review-box">
+        <div class="review-icon"><i class="fa-solid fa-star"></i></div>
+        <h2>How was your experience?</h2>
+        <p>Help us make Travel India better. Share your experience with us!</p>
+        <form id="reviewForm">
+            <div class="rating-stars" id="ratingStars">
+                <button type="button" data-rating="1" aria-label="1 star">★</button>
+                <button type="button" data-rating="2" aria-label="2 stars">★</button>
+                <button type="button" data-rating="3" aria-label="3 stars">★</button>
+                <button type="button" data-rating="4" aria-label="4 stars">★</button>
+                <button type="button" data-rating="5" aria-label="5 stars">★</button>
+            </div>
+            <textarea class="review-textarea" id="reviewText" placeholder="Write your experience here..." maxlength="1000" required></textarea>
+            <div class="review-message" id="reviewMessage"></div>
+            <button type="submit" class="submit-review" id="submitReview">Submit Review <i class="fa-solid fa-arrow-right"></i></button>
+        </form>
+        <button class="skip-review" id="skipReview" type="button">Skip for now</button>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+<script>
+// ===== SMOOTH SCROLL + GSAP =====
+const hasGsap = typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined';
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const canHover = window.matchMedia('(hover: hover)').matches;
+let lenis = null;
+if (hasGsap) gsap.registerPlugin(ScrollTrigger);
+
+if (typeof Lenis !== 'undefined' && !reduceMotion) {
+    lenis = new Lenis({ duration: 1.25, easing: t => Math.min(1, 1.001 - Math.pow(2, -10 * t)), smoothWheel: true, smoothTouch: false });
+    if (hasGsap) {
+        lenis.on('scroll', ScrollTrigger.update);
+        gsap.ticker.add(time => lenis.raf(time * 1000));
+        gsap.ticker.lagSmoothing(0);
+    } else {
+        (function raf(t) { lenis.raf(t); requestAnimationFrame(raf); })(0);
+    }
+}
+
+document.querySelectorAll('a[href^="#"]').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+        const id = this.getAttribute('href');
+        if (id.length < 2) return;
+        const target = document.querySelector(id);
+        if (!target) return;
+        e.preventDefault();
+        if (lenis) lenis.scrollTo(id === '#home' ? 0 : target, { offset: id === '#home' ? 0 : -10, duration: 1.6 });
+        else target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+});
+
+function scrollToSearch() {
+    if (lenis) lenis.scrollTo(0, { duration: 1.4 });
+    else window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Scroll progress + header glass on scroll
+const progressBar = document.getElementById('scrollProgress');
+const siteHeader = document.getElementById('siteHeader');
+function onScrollUI() {
+    const h = document.documentElement.scrollHeight - window.innerHeight;
+    progressBar.style.transform = 'scaleX(' + (h > 0 ? window.scrollY / h : 0) + ')';
+    siteHeader.classList.toggle('scrolled', window.scrollY > 60);
+}
+window.addEventListener('scroll', onScrollUI, { passive: true });
+onScrollUI();
+
+// ===== PROFILE DROPDOWN =====
+const profileWrapper = document.getElementById('profileWrapper');
+document.getElementById('profileTrigger').addEventListener('click', function(e) {
+    e.stopPropagation();
+    profileWrapper.classList.toggle('open');
+});
+document.addEventListener('click', function(e) {
+    if (!profileWrapper.contains(e.target)) profileWrapper.classList.remove('open');
+});
+
+// ===== STATE -> DISTRICT =====
+const stateSelect = document.getElementById('stateSelect');
+const districtSelect = document.getElementById('districtSelect');
+let districtRequest = 0;
+
+function resetDistricts(text, disabled) {
+    districtSelect.innerHTML = '';
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = text;
+    districtSelect.appendChild(o);
+    districtSelect.disabled = disabled;
+}
+
+async function loadDistricts(stateId) {
+    const requestId = ++districtRequest;
+
+    if (!stateId) { resetDistricts('Select a state first', true); return; }
+
+    resetDistricts('Loading districts...', true);
+
+    try {
+        const response = await fetch('/api/districts/' + encodeURIComponent(stateId), { headers: { 'Accept': 'application/json' } });
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const data = await response.json();
+        if (requestId !== districtRequest) return;   // a newer state was chosen meanwhile
+
+        const list = Array.isArray(data) ? data : (data.districts || data.data || []);
+
+        resetDistricts('All Districts', false);
+
+        list.forEach(function(d) {
+            const option = document.createElement('option');
+            option.value = d.id != null ? d.id : (d.district_id != null ? d.district_id : '');
+            option.textContent = d.name || d.district_name || d.district || ('District ' + option.value);
+            districtSelect.appendChild(option);
+        });
+
+        if (!list.length) resetDistricts('No districts found', true);
+
+    } catch (error) {
+        console.error('Districts:', error);
+        if (requestId === districtRequest) resetDistricts('Unable to load districts', true);
+    }
+}
+
+stateSelect.addEventListener('change', function() { loadDistricts(this.value); });
+if (stateSelect.value) loadDistricts(stateSelect.value);   // browser back / autofill
+
+// Don't send empty district/category in the URL
+document.getElementById('destinationForm').addEventListener('submit', function() {
+    if (!districtSelect.value) districtSelect.disabled = true;
+    if (!document.getElementById('selectedCategory').value) document.getElementById('selectedCategory').disabled = true;
+});
+window.addEventListener('pageshow', function() {
+    document.getElementById('selectedCategory').disabled = false;
+    if (stateSelect.value) { if (districtSelect.disabled && districtSelect.options.length < 2) loadDistricts(stateSelect.value); }
+});
+
+// ===== CATEGORY CLICK =====
+const categoryItems = document.querySelectorAll('.category-item');
+const selectedCategory = document.getElementById('selectedCategory');
+const categoryChip = document.getElementById('categoryChip');
+const categoryChipName = document.getElementById('categoryChipName');
+const destinationForm = document.getElementById('destinationForm');
+
+function setCategory(value) {
+    selectedCategory.value = value || '';
+    categoryItems.forEach(function(i) { i.classList.toggle('selected', i.dataset.category === value); });
+    categoryChip.classList.toggle('show', !!value);
+    categoryChipName.textContent = value || '';
+}
+
+function chooseCategory(item) {
+    const value = item.dataset.category;
+    if (selectedCategory.value === value) { setCategory(''); return; }
+    setCategory(value);
+
+    if (stateSelect.value) { destinationForm.requestSubmit ? destinationForm.requestSubmit() : destinationForm.submit(); return; }
+
+    scrollToSearch();
+    setTimeout(function() { stateSelect.focus({ preventScroll: true }); }, 900);
+}
+
+categoryItems.forEach(function(item) {
+    item.addEventListener('click', function() { chooseCategory(item); });
+    item.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); chooseCategory(item); }
+    });
+});
+document.getElementById('clearCategory').addEventListener('click', function() { setCategory(''); });
+
+// ===== COUNTS =====
+(function() {
+    document.getElementById('stateCount').textContent = document.querySelectorAll('#statesGrid .state-card').length + ' States';
+    document.getElementById('utCount').textContent = document.querySelectorAll('#utGrid .state-card').length + ' Union Territories';
+})();
+
+// ===== 3D TILT =====
+if (canHover && !reduceMotion) {
+    function bindTilt(sel, amt, glow) {
+        document.querySelectorAll(sel).forEach(function(el) {
+            el.addEventListener('pointermove', function(e) {
+                const r = el.getBoundingClientRect();
+                const px = (e.clientX - r.left) / r.width, py = (e.clientY - r.top) / r.height;
+                el.style.setProperty('--ry', ((px - .5) * amt) + 'deg');
+                el.style.setProperty('--rx', ((.5 - py) * amt) + 'deg');
+                if (glow) { el.style.setProperty('--mx', (px * 100) + '%'); el.style.setProperty('--my', (py * 100) + '%'); }
+            });
+            el.addEventListener('pointerleave', function() { el.style.setProperty('--ry', '0deg'); el.style.setProperty('--rx', '0deg'); });
+        });
+    }
+    bindTilt('.tilt-card', 14, true);
+    bindTilt('.category-image.tilt', 22, false);
+}
+
+// ===== GSAP ANIMATIONS =====
+if (hasGsap && !reduceMotion) {
+    const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+    tl.from('.hero-navigation a', { y: -30, opacity: 0, stagger: .08, duration: .9 })
+      .from('.hero-kicker', { y: 20, opacity: 0, duration: .9 }, '-=.5')
+      .from('.hero-title .line > span', { yPercent: 115, rotateX: -50, transformOrigin: '50% 100%', stagger: .15, duration: 1.3 }, '-=.6')
+      .from('.hero-search .search-title > *', { y: 30, opacity: 0, stagger: .1, duration: .9 }, '-=.8')
+      .from('.hero-search .field, .hero-search .search-button', { y: 40, opacity: 0, stagger: .12, duration: .9, clearProps: 'transform,opacity' }, '-=.7');
+
+    gsap.to('#heroVideo', { yPercent: 12, scale: 1.08, ease: 'none', scrollTrigger: { trigger: '#home', start: 'top top', end: 'bottom top', scrub: true } });
+    gsap.to('.hero-copy', { y: -80, opacity: .1, ease: 'none', scrollTrigger: { trigger: '#home', start: 'top top', end: '70% top', scrub: true } });
+
+    gsap.utils.toArray('.section-heading').forEach(function(h) {
+        gsap.from(h.children, { y: 55, opacity: 0, duration: 1.1, stagger: .14, ease: 'power3.out', scrollTrigger: { trigger: h, start: 'top 85%', once: true } });
+    });
+
+    gsap.set('.category-item', { opacity: 0 });
+    ScrollTrigger.batch('.category-item', { start: 'top 92%', once: true, onEnter: function(b) {
+        gsap.fromTo(b, { y: 80, opacity: 0, rotateX: -40, scale: .85, transformPerspective: 800 },
+            { y: 0, opacity: 1, rotateX: 0, scale: 1, stagger: .1, duration: 1, ease: 'back.out(1.4)', clearProps: 'transform,opacity' });
+    }});
+
+    gsap.utils.toArray('.group-title').forEach(function(g) {
+        gsap.from(g, { x: -50, opacity: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: g, start: 'top 90%', once: true } });
+    });
+
+    gsap.set('.state-card', { opacity: 0 });
+    ScrollTrigger.batch('.state-card', { start: 'top 94%', once: true, onEnter: function(b) {
+        gsap.fromTo(b, { y: 70, opacity: 0, rotateX: -22, transformPerspective: 900 },
+            { y: 0, opacity: 1, rotateX: 0, stagger: .07, duration: .95, ease: 'power3.out', clearProps: 'transform,opacity' });
+    }});
+
+    gsap.from('.globe-stage', { scale: .6, opacity: 0, rotate: -12, duration: 1.6, ease: 'power3.out', scrollTrigger: { trigger: '#globe', start: 'top 70%', once: true } });
+    gsap.from('.globe-caption, .globe-hint', { y: 30, opacity: 0, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: '.globe-caption', start: 'top 95%', once: true } });
+    gsap.from('.globe-stats > div', { y: 40, opacity: 0, stagger: .15, duration: 1, ease: 'power3.out', scrollTrigger: { trigger: '.globe-stats', start: 'top 92%', once: true } });
+    gsap.from('footer > *', { y: 30, opacity: 0, stagger: .12, duration: .9, ease: 'power3.out', scrollTrigger: { trigger: 'footer', start: 'top 95%', once: true } });
+}
+
+// ===== COUNTERS =====
+document.querySelectorAll('[data-count]').forEach(function(el) {
+    const target = Number(el.dataset.count);
+    new IntersectionObserver(function(entries, obs) {
+        entries.forEach(function(en) {
+            if (!en.isIntersecting) return;
+            obs.unobserve(el);
+            const start = performance.now();
+            (function tick(now) {
+                const p = Math.min(1, (now - start) / 1800);
+                el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+                if (p < 1) requestAnimationFrame(tick);
+            })(start);
+        });
+    }, { threshold: .6 }).observe(el);
+});
+
+// ===== ACTIVE NAV LINK =====
+(function() {
+    const links = document.querySelectorAll('#heroNav a');
+    const map = {};
+    links.forEach(function(a) { map[a.getAttribute('href')] = a; });
+    const io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(en) {
+            if (!en.isIntersecting) return;
+            links.forEach(function(l) { l.classList.remove('active'); });
+            const a = map['#' + en.target.id];
+            if (a) a.classList.add('active');
+        });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    ['#home', '#categories', '#explore-states', '#globe', '#reviews'].forEach(function(id) {
+        const s = document.querySelector(id); if (s) io.observe(s);
+    });
+})();
+
+// ===== 3D EARTH GLOBE =====
+(function initGlobe() {
+    const wrap = document.getElementById('globeCanvasWrap');
+    if (!wrap || typeof THREE === 'undefined') return;
+    const IMG = 'https://unpkg.com/three-globe/example/img/';
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setClearColor(0x000000, 0);
+    wrap.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+    camera.position.z = 4.3;
+
+    const loader = new THREE.TextureLoader();
+    loader.setCrossOrigin('anonymous');
+    const material = new THREE.MeshPhongMaterial({ color: 0x2a6fb8, shininess: 14, specular: new THREE.Color(0x335577), bumpScale: 0.045 });
+
+    loader.load(IMG + 'earth-blue-marble.jpg', function(t) {
+        if (THREE.sRGBEncoding) t.encoding = THREE.sRGBEncoding;
+        t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        material.map = t; material.color.set(0xffffff); material.needsUpdate = true;
+    });
+    loader.load(IMG + 'earth-topology.png', function(t) { material.bumpMap = t; material.needsUpdate = true; });
+    loader.load(IMG + 'earth-water.png', function(t) { material.specularMap = t; material.needsUpdate = true; });
+
+    const tilt = new THREE.Group();
+    scene.add(tilt);
+    const globe = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 96), material);
+    tilt.add(globe);
+
+    const LAT = 20.6, LON = 79;
+    const phi = (LON + 180) * Math.PI / 180, theta = (90 - LAT) * Math.PI / 180;
+    const pos = new THREE.Vector3(-Math.cos(phi) * Math.sin(theta), Math.cos(theta), Math.sin(phi) * Math.sin(theta));
+
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 16, 16), new THREE.MeshBasicMaterial({ color: 0xffcf6b }));
+    dot.position.copy(pos).multiplyScalar(1.006);
+    globe.add(dot);
+
+    const ringMat = new THREE.MeshBasicMaterial({ color: 0xffcf6b, transparent: true, opacity: 0.9, side: THREE.DoubleSide, depthWrite: false });
+    const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.04, 40), ringMat);
+    ring.position.copy(pos).multiplyScalar(1.008);
+    ring.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), pos.clone().normalize());
+    globe.add(ring);
+
+    scene.add(new THREE.Mesh(new THREE.SphereGeometry(1.14, 64, 64), new THREE.ShaderMaterial({
+        vertexShader: 'varying vec3 vN; void main(){ vN = normalize(normalMatrix * normal); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+        fragmentShader: 'varying vec3 vN; void main(){ float i = pow(0.62 - dot(vN, vec3(0.0,0.0,1.0)), 3.0); gl_FragColor = vec4(0.30,0.65,1.0,1.0) * i * 1.7; }',
+        side: THREE.BackSide, blending: THREE.AdditiveBlending, transparent: true, depthWrite: false
+    })));
+
+    scene.add(new THREE.AmbientLight(0x9bb8e8, 0.7));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.35); sun.position.set(-3, 1.8, 4); scene.add(sun);
+    const rim = new THREE.DirectionalLight(0x4a9dff, 0.5); rim.position.set(4, -1, -2); scene.add(rim);
+
+    globe.rotation.y = -Math.atan2(pos.x, pos.z) - 0.9;
+    tilt.rotation.x = LAT * Math.PI / 180 * 0.75;
+    tilt.rotation.z = 0.12;
+
+    function resize() {
+        const w = wrap.clientWidth || 400;
+        renderer.setSize(w, w, false);
+        camera.aspect = 1; camera.updateProjectionMatrix();
+    }
+    resize();
+    window.addEventListener('resize', resize);
+
+    let dragging = false, lastX = 0, velocity = 0;
+    wrap.addEventListener('pointerdown', function(e) { dragging = true; lastX = e.clientX; velocity = 0; wrap.setPointerCapture(e.pointerId); });
+    wrap.addEventListener('pointermove', function(e) {
+        if (!dragging) return;
+        velocity = (e.clientX - lastX) * 0.006; lastX = e.clientX;
+        globe.rotation.y += velocity;
+    });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(function(ev) { wrap.addEventListener(ev, function() { dragging = false; }); });
+
+    let lastScroll = window.scrollY, scrollBoost = 0;
+    window.addEventListener('scroll', function() { scrollBoost += (window.scrollY - lastScroll) * 0.00035; lastScroll = window.scrollY; }, { passive: true });
+
+    let visible = false;
+    new IntersectionObserver(function(entries) { visible = entries[0].isIntersecting; }, { threshold: 0.05 }).observe(wrap);
+
+    const clock = new THREE.Clock();
+    (function animate() {
+        requestAnimationFrame(animate);
+        if (!visible) { clock.getDelta(); return; }
+        const dt = Math.min(clock.getDelta(), 0.05), t = clock.elapsedTime;
+        if (!dragging) { velocity *= 0.95; globe.rotation.y += dt * 0.32 + velocity + scrollBoost; }
+        scrollBoost *= 0.9;
+        const k = (t % 1.8) / 1.8;
+        ring.scale.setScalar(1 + k * 3.2);
+        ringMat.opacity = 0.9 * (1 - k);
+        tilt.position.y = Math.sin(t * 0.8) * 0.02;
+        renderer.render(scene, camera);
+    })();
+})();
+
+// ===== RATING AND REVIEW =====
+const reviewModal = document.getElementById('reviewModal');
+const ratingButtons = document.querySelectorAll('#ratingStars button');
+const reviewForm = document.getElementById('reviewForm');
+const reviewText = document.getElementById('reviewText');
+const reviewMessage = document.getElementById('reviewMessage');
+let selectedRating = 0;
+const REVIEW_SKIP_KEY = 'travelIndiaReviewSkipUntil';
+
+function showReviewPopup() { reviewModal.classList.add('show'); if (lenis) lenis.stop(); }
+function closeReviewPopup() { reviewModal.classList.remove('show'); if (lenis) lenis.start(); }
+function skipReview() {
+    try { localStorage.setItem(REVIEW_SKIP_KEY, (Date.now() + 30 * 60 * 1000).toString()); } catch (e) {}
+    closeReviewPopup();
+}
+document.getElementById('skipReview').addEventListener('click', skipReview);
+
+ratingButtons.forEach(function(button) {
+    button.addEventListener('click', function() {
+        selectedRating = Number(this.dataset.rating);
+        ratingButtons.forEach(function(star) { star.classList.toggle('active', Number(star.dataset.rating) <= selectedRating); });
+    });
+});
+
+async function checkReviewStatus() {
+    try {
+        const response = await fetch('/api/review-status');
+        if (!response.ok) throw new Error('Review status unavailable');
+        const data = await response.json();
+        if (data.has_review) return;
+        let skipUntil = 0;
+        try { skipUntil = Number(localStorage.getItem(REVIEW_SKIP_KEY) || 0); } catch (e) {}
+        if (Date.now() >= skipUntil) setTimeout(showReviewPopup, 1500);
+    } catch (error) { console.error('Review status:', error); }
+}
+checkReviewStatus();
+
+reviewForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    reviewMessage.textContent = '';
+    if (selectedRating < 1 || selectedRating > 5) { reviewMessage.textContent = 'Please select a star rating.'; return; }
+    const text = reviewText.value.trim();
+    if (!text) { reviewMessage.textContent = 'Please write your review.'; return; }
+
+    const submitButton = document.getElementById('submitReview');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Submitting...';
+
+    try {
+        const response = await fetch('/api/submit-review', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ rating: selectedRating, review_text: text }) });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || 'Unable to submit review');
+        try { localStorage.removeItem(REVIEW_SKIP_KEY); } catch (e) {}
+        closeReviewPopup();
+        alert('Thank you! Your review has been submitted successfully.');
+        loadReviews();
+    } catch (error) {
+        reviewMessage.textContent = error.message;
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerHTML = 'Submit Review <i class="fa-solid fa-arrow-right"></i>';
+    }
+});
+
+// ===== LOAD REVIEWS =====
+async function loadReviews() {
+    const reviewsGrid = document.getElementById('reviewsGrid');
+    try {
+        const response = await fetch('/api/reviews');
+        if (!response.ok) throw new Error('Unable to load reviews');
+        const reviews = await response.json();
+        reviewsGrid.innerHTML = '';
+
+        if (!reviews.length) {
+            reviewsGrid.innerHTML = '<div class="no-reviews"><i class="fa-regular fa-comments"></i><p>Be the first to share your experience!</p></div>';
+            return;
+        }
+
+        reviews.forEach(function(review) {
+            const card = document.createElement('div');
+            card.className = 'review-card';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'review-avatar';
+            const initial = (review.username || 'T').charAt(0).toUpperCase();
+            if (review.profile_image) {
+                const image = document.createElement('img');
+                image.src = review.profile_image; image.alt = 'Profile image';
+                image.onerror = function() { this.remove(); avatar.textContent = initial; };
+                avatar.appendChild(image);
+            } else { avatar.textContent = initial; }
+
+            const user = document.createElement('div'); user.className = 'review-user';
+            const details = document.createElement('div');
+            const name = document.createElement('strong'); name.textContent = review.username || 'Traveler';
+            const date = document.createElement('small'); date.textContent = review.created_at || 'Travel India Member';
+            details.append(name, date);
+            user.append(avatar, details);
+
+            const rating = Math.min(5, Math.max(0, Number(review.rating) || 0));
+            const stars = document.createElement('div'); stars.className = 'review-stars';
+            stars.textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+
+            const p = document.createElement('p'); p.textContent = review.review_text || '';
+            card.append(user, stars, p);
+            reviewsGrid.appendChild(card);
+        });
+
+        if (hasGsap && !reduceMotion) gsap.from('.review-card', { y: 50, opacity: 0, stagger: .12, duration: .9, ease: 'power3.out', clearProps: 'transform,opacity' });
+        if (hasGsap) ScrollTrigger.refresh();
+    } catch (error) { console.error('Loading reviews:', error); }
+}
+loadReviews();
+
+window.addEventListener('load', function() { if (hasGsap) ScrollTrigger.refresh(); });
+</script>
+
+</body>
+</html>

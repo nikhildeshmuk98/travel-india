@@ -1,0 +1,1542 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Login | Travel India</title>
+
+    <meta name="description" content="Login to Travel India and explore incredible destinations across India.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+
+/* =========================================
+   GLOBAL SETTINGS
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #e87532;
+    --primary-dark: #c9581d;
+    --primary-light: #ffb36c;
+    --white: #ffffff;
+    --glass: rgba(255,255,255,0.88);
+    --dark: #242424;
+    --muted: rgba(255,255,255,0.78);
+}
+
+html {
+    width: 100%;
+    min-height: 100%;
+    scroll-behavior: smooth;
+}
+
+html, body {
+    font-family: 'DM Sans', sans-serif;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background: #242424;
+}
+
+button, input {
+    font-family: inherit;
+}
+
+a {
+    text-decoration: none;
+}
+
+
+/* =========================================
+   BACKGROUND
+========================================= */
+
+.background {
+    position: fixed;
+    inset: 0;
+    z-index: -3;
+
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(0,0,0,0.62),
+            rgba(0,0,0,0.20),
+            rgba(0,0,0,0.12)
+        ),
+        url("{{ url_for('static', filename='images/banner2.jpg') }}");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+
+    animation: backgroundZoom 18s ease-in-out infinite alternate;
+
+    will-change: transform;
+}
+
+@keyframes backgroundZoom {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.07);
+    }
+}
+
+.background-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+
+    background: linear-gradient(
+        120deg,
+        rgba(0,0,0,0.24),
+        transparent 60%,
+        rgba(0,0,0,0.18)
+    );
+
+    pointer-events: none;
+}
+
+
+/* =========================================
+   NAVBAR
+========================================= */
+
+.navbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    min-height: 90px;
+
+    padding: 15px 7%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    z-index: 100;
+
+    background: linear-gradient(
+        180deg,
+        rgba(0,0,0,0.25),
+        transparent
+    );
+}
+
+
+/* BRAND */
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+
+    gap: 13px;
+
+    color: white;
+    text-decoration: none;
+
+    transition: .3s ease;
+}
+
+.brand:hover {
+    transform: translateY(-2px);
+}
+
+
+/* LOGO IMAGE */
+
+.brand img {
+    width: 68px;
+    height: 68px;
+
+    display: block;
+
+    object-fit: contain;
+    object-position: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    filter: drop-shadow(
+        0 5px 12px rgba(0,0,0,.22)
+    );
+
+    transition: transform .3s ease;
+}
+
+.brand:hover img {
+    transform: scale(1.07);
+}
+
+
+/* BRAND TEXT */
+
+.brand span {
+    font-size: 23px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    color: white;
+    white-space: nowrap;
+
+    text-shadow: 0 3px 12px rgba(0,0,0,.3);
+}
+
+.brand span strong {
+    color: #ffb36c;
+}
+
+
+/* HOME BUTTON */
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+
+    color: white;
+
+    text-decoration: none;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    padding: 11px 18px;
+
+    border: 1px solid rgba(255,255,255,.35);
+    border-radius: 8px;
+
+    background: rgba(255,255,255,.08);
+
+    backdrop-filter: blur(10px);
+
+    transition: .3s ease;
+}
+
+.nav-link i {
+    color: #ffb36c;
+}
+
+.nav-link:hover {
+    color: white;
+
+    background: rgba(232,117,50,.85);
+
+    border-color: var(--primary);
+
+    transform: translateY(-2px);
+}
+
+
+/* =========================================
+   MAIN CONTAINER
+========================================= */
+
+.main-container {
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    padding: 115px 11% 55px 5%;
+}
+
+
+/* =========================================
+   LOGIN AREA
+========================================= */
+
+.login-area {
+    width: 420px;
+    max-width: 100%;
+
+    color: white;
+
+    padding: 15px 5px;
+
+    animation: slideIn 1s ease forwards;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(35px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+/* =========================================
+   WELCOME TEXT
+========================================= */
+
+.welcome {
+    font-size: 13px;
+
+    text-transform: uppercase;
+
+    letter-spacing: 4px;
+
+    font-weight: 700;
+
+    color: #ffc18d;
+
+    margin-bottom: 13px;
+}
+
+
+/* =========================================
+   MAIN HEADING
+========================================= */
+
+.heading {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 49px;
+
+    line-height: 1.15;
+
+    font-weight: 800;
+
+    margin-bottom: 12px;
+
+    text-shadow: 0 4px 15px rgba(0,0,0,.25);
+}
+
+.heading span {
+    color: #ffb36c;
+}
+
+
+/* =========================================
+   SUBTITLE
+========================================= */
+
+.subtitle {
+    color: rgba(255,255,255,.92);
+
+    font-size: 14px;
+
+    line-height: 1.8;
+
+    margin-bottom: 32px;
+}
+
+
+/* =========================================
+   FORM GROUP
+========================================= */
+
+.form-group {
+    margin-bottom: 21px;
+}
+
+.form-group label {
+    display: block;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    margin-bottom: 9px;
+
+    color: white;
+}
+
+
+/* =========================================
+   INPUT WRAPPER
+========================================= */
+
+.input-wrap {
+    display: flex;
+    align-items: center;
+
+    width: 100%;
+
+    border-bottom: 1.5px solid rgba(255,255,255,.75);
+
+    transition: .3s ease;
+}
+
+.input-wrap:focus-within {
+    border-color: #ffb36c;
+
+    box-shadow: 0 2px 0 #ffb36c;
+}
+
+.input-wrap > i {
+    color: #ffbd83;
+
+    width: 28px;
+
+    font-size: 15px;
+
+    flex-shrink: 0;
+}
+
+.input-wrap input {
+    flex: 1;
+
+    min-width: 0;
+    width: 100%;
+
+    padding: 13px 5px;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: white;
+
+    font-family: inherit;
+    font-size: 14px;
+}
+
+.input-wrap input::placeholder {
+    color: rgba(255,255,255,.75);
+}
+
+
+/* =========================================
+   PASSWORD TOGGLE
+========================================= */
+
+.password-toggle {
+    border: none;
+
+    background: transparent;
+
+    color: white;
+
+    padding: 10px;
+
+    cursor: pointer;
+
+    font-size: 15px;
+
+    transition: .3s;
+}
+
+.password-toggle:hover {
+    color: #ffb36c;
+}
+
+
+/* =========================================
+   REMEMBER & FORGOT PASSWORD
+========================================= */
+
+.options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin: 3px 0 25px;
+
+    font-size: 12px;
+}
+
+.remember {
+    display: flex;
+    align-items: center;
+
+    gap: 7px;
+
+    color: white;
+
+    cursor: pointer;
+}
+
+.remember input {
+    accent-color: var(--primary);
+
+    width: 15px;
+    height: 15px;
+
+    cursor: pointer;
+}
+
+.forgot-link {
+    color: #ffd0a9;
+
+    text-decoration: none;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition: .3s;
+}
+
+.forgot-link:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+
+/* =========================================
+   LOGIN BUTTON
+========================================= */
+
+.login-button {
+    width: 100%;
+
+    padding: 15px;
+
+    border: none;
+    border-radius: 7px;
+
+    background: linear-gradient(
+        135deg,
+        #f28a45,
+        #d95b20
+    );
+
+    color: white;
+
+    font-family: inherit;
+
+    font-size: 15px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    cursor: pointer;
+
+    transition: .3s ease;
+
+    box-shadow: 0 8px 22px rgba(0,0,0,.2);
+}
+
+.login-button:hover {
+    transform: translateY(-3px);
+
+    background: linear-gradient(
+        135deg,
+        #ff9c59,
+        #e66a2a
+    );
+
+    box-shadow: 0 12px 28px rgba(0,0,0,.3);
+}
+
+.login-button:active {
+    transform: scale(.98);
+}
+
+
+/* =========================================
+   DIVIDER
+========================================= */
+
+.divider {
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    margin: 25px 0 19px;
+
+    color: rgba(255,255,255,.9);
+
+    font-size: 12px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+
+    flex: 1;
+
+    height: 1px;
+
+    background: rgba(255,255,255,.55);
+}
+
+
+/* =========================================
+   SOCIAL BUTTONS
+========================================= */
+
+.social-buttons {
+    display: flex;
+
+    gap: 13px;
+}
+
+.social-button {
+    flex: 1;
+
+    min-width: 0;
+    min-height: 48px;
+
+    border-radius: 7px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 11px;
+
+    text-decoration: none;
+
+    color: white;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    border: 1px solid rgba(255,255,255,.7);
+
+    background: rgba(255,255,255,.12);
+
+    backdrop-filter: blur(8px);
+
+    cursor: pointer;
+
+    transition: .3s ease;
+}
+
+.social-button:hover {
+    background: white;
+
+    color: #222;
+
+    transform: translateY(-3px);
+}
+
+.google-icon {
+    color: #ffffff;
+    font-size: 17px;
+}
+
+.facebook-icon {
+    color: #ffffff;
+    font-size: 19px;
+}
+
+.social-button:hover .google-icon {
+    color: #4285f4;
+}
+
+.social-button:hover .facebook-icon {
+    color: #1877f2;
+}
+
+
+/* =========================================
+   REGISTER TEXT
+========================================= */
+
+.register-text {
+    text-align: center;
+
+    margin-top: 27px;
+
+    font-size: 13px;
+
+    color: white;
+}
+
+.register-text a {
+    color: #ffc18d;
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+    margin-left: 4px;
+
+    transition: .3s;
+}
+
+.register-text a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+
+/* =========================================
+   STATUS MESSAGES
+========================================= */
+
+.message {
+    display: none;
+
+    padding: 11px 13px;
+
+    margin-bottom: 18px;
+
+    border-radius: 6px;
+
+    font-size: 13px;
+
+    line-height: 1.5;
+}
+
+.message.error {
+    display: block;
+
+    background: rgba(180,35,35,.85);
+
+    color: white;
+}
+
+.message.success {
+    display: block;
+
+    background: rgba(24,130,75,.9);
+
+    color: white;
+}
+
+
+/* =========================================
+   FORGOT PASSWORD MODAL
+========================================= */
+
+.modal {
+    position: fixed;
+    inset: 0;
+
+    z-index: 2000;
+
+    display: none;
+    align-items: center;
+    justify-content: center;
+
+    padding: 20px;
+
+    background: rgba(0,0,0,.72);
+
+    backdrop-filter: blur(8px);
+}
+
+.modal.active {
+    display: flex;
+}
+
+.modal-content {
+    width: 100%;
+    max-width: 410px;
+
+    padding: 30px 27px;
+
+    border-radius: 13px;
+
+    background: #fff;
+
+    color: #252525;
+
+    box-shadow: 0 15px 60px rgba(0,0,0,.3);
+
+    animation: modalIn .3s ease;
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-close {
+    display: block;
+
+    margin-left: auto;
+
+    border: none;
+
+    background: transparent;
+
+    font-size: 22px;
+
+    cursor: pointer;
+
+    color: #555;
+}
+
+.modal-icon {
+    width: 55px;
+    height: 55px;
+
+    border-radius: 50%;
+
+    background: #fff0e5;
+
+    color: var(--primary);
+
+    display: grid;
+    place-items: center;
+
+    font-size: 23px;
+
+    margin-bottom: 18px;
+}
+
+.modal-content h2 {
+    font-family: 'Playfair Display', serif;
+
+    font-size: 27px;
+
+    margin-bottom: 10px;
+}
+
+.modal-content p {
+    color: #666;
+
+    font-size: 13px;
+
+    line-height: 1.7;
+
+    margin-bottom: 20px;
+}
+
+.modal-content label {
+    font-size: 13px;
+
+    font-weight: 700;
+
+    display: block;
+
+    margin-bottom: 8px;
+}
+
+.modal-content input {
+    width: 100%;
+
+    border: 1px solid #ddd;
+
+    border-radius: 6px;
+
+    padding: 13px;
+
+    outline: none;
+
+    font-family: inherit;
+
+    margin-bottom: 15px;
+}
+
+.modal-content input:focus {
+    border-color: var(--primary);
+}
+
+.modal-submit {
+    width: 100%;
+
+    border: none;
+
+    background: var(--primary);
+
+    color: white;
+
+    border-radius: 6px;
+
+    padding: 14px;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition: .3s;
+}
+
+.modal-submit:hover {
+    background: var(--primary-dark);
+}
+
+.modal-submit:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.modal-status {
+    font-size: 12px;
+
+    margin-top: 13px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================
+   TABLET RESPONSIVE
+========================================= */
+
+@media (max-width: 1024px) {
+
+    .navbar {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+
+    .main-container {
+        padding-right: 7%;
+        padding-left: 5%;
+    }
+
+    .login-area {
+        width: 400px;
+    }
+
+    .heading {
+        font-size: 44px;
+    }
+
+}
+
+
+/* =========================================
+   MOBILE RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+
+    /* MOBILE BACKGROUND */
+
+    .background {
+        background-image:
+            linear-gradient(
+                rgba(0,0,0,.55),
+                rgba(0,0,0,.65)
+            ),
+            url("{{ url_for('static', filename='images/mobile2.jpg') }}");
+
+        background-position: center;
+        background-size: cover;
+    }
+
+
+    /* MOBILE NAVBAR */
+
+    .navbar {
+        min-height: 75px;
+
+        padding: 10px 5%;
+    }
+
+    .brand {
+        gap: 9px;
+    }
+
+    .brand img {
+        width: 52px;
+        height: 52px;
+    }
+
+    .brand span {
+        font-size: 18px;
+        letter-spacing: .5px;
+    }
+
+    .nav-link {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+
+
+    /* MOBILE MAIN */
+
+    .main-container {
+        min-height: 100vh;
+
+        justify-content: center;
+
+        padding: 110px 8% 45px;
+    }
+
+    .login-area {
+        width: 100%;
+        max-width: 420px;
+    }
+
+    .heading {
+        font-size: 40px;
+    }
+
+    .subtitle {
+        font-size: 13px;
+    }
+
+}
+
+
+/* =========================================
+   SMALL MOBILE DEVICES
+========================================= */
+
+@media (max-width: 480px) {
+
+    .navbar {
+        padding: 10px 4%;
+    }
+
+    .brand img {
+        width: 46px;
+        height: 46px;
+    }
+
+    .brand span {
+        font-size: 16px;
+    }
+
+    .nav-link {
+        padding: 8px 10px;
+        font-size: 11px;
+        gap: 6px;
+    }
+
+    .main-container {
+        padding: 105px 6% 40px;
+    }
+
+    .login-area {
+        padding: 10px 2px;
+    }
+
+    .welcome {
+        font-size: 11px;
+        letter-spacing: 3px;
+    }
+
+    .heading {
+        font-size: 36px;
+    }
+
+    .subtitle {
+        font-size: 12px;
+        line-height: 1.7;
+        margin-bottom: 25px;
+    }
+
+    .form-group {
+        margin-bottom: 19px;
+    }
+
+    .login-button {
+        padding: 14px;
+        font-size: 13px;
+    }
+
+    .social-buttons {
+        gap: 9px;
+    }
+
+    .social-button {
+        font-size: 12px;
+        gap: 7px;
+    }
+
+    .register-text {
+        font-size: 12px;
+    }
+
+}
+
+
+/* =========================================
+   EXTRA SMALL MOBILE
+========================================= */
+
+@media (max-width: 380px) {
+
+    .brand {
+        gap: 7px;
+    }
+
+    .brand img {
+        width: 40px;
+        height: 40px;
+    }
+
+    .brand span {
+        font-size: 14px;
+    }
+
+    .nav-link {
+        padding: 7px 9px;
+        font-size: 10px;
+    }
+
+    .heading {
+        font-size: 32px;
+    }
+
+    .options {
+        font-size: 11px;
+    }
+
+    .social-button {
+        font-size: 11px;
+        gap: 6px;
+    }
+
+    .main-container {
+        padding-left: 6%;
+        padding-right: 6%;
+    }
+
+}
+
+
+/* =========================================
+   REDUCED MOTION ACCESSIBILITY
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+        scroll-behavior: auto !important;
+    }
+
+}
+
+
+    </style>
+</head>
+
+<body>
+
+    <div class="background"></div>
+    <div class="background-overlay"></div>
+
+    <!-- NAVBAR -->
+
+  <!-- NAVBAR -->
+
+<nav class="navbar">
+
+    <a href="{{ url_for('index') }}" class="brand">
+
+        <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt="Travel India Logo"
+        ></a>
+
+    <a href="{{ url_for('index') }}" class="nav-link">
+        <i class="fa-solid fa-house"></i>
+        Home
+    </a>
+
+</nav>
+
+    <!-- LOGIN -->
+
+    <main class="main-container">
+
+        <section class="login-area">
+
+            <div class="welcome">WELCOME BACK</div>
+
+            <h1 class="heading">
+                Your Journey<br>
+                Starts <span>Here.</span>
+            </h1>
+
+            <p class="subtitle">
+                Sign in to discover incredible destinations,
+                plan unforgettable journeys and explore the beauty of India.
+            </p>
+
+            <div id="loginMessage" class="message"></div>
+
+            <form action="{{ url_for('login') }}" method="POST" id="loginForm">
+
+                <div class="form-group">
+
+                    <label for="identifier">Email or Username</label>
+
+                    <div class="input-wrap">
+
+                        <i class="fa-solid fa-user"></i>
+
+                        <input
+    type="email"
+    id="email"
+    name="email"
+    placeholder="Enter your email address"
+    autocomplete="email"
+    required
+>
+
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+
+                    <label for="password">Password</label>
+
+                    <div class="input-wrap">
+
+                        <i class="fa-solid fa-lock"></i>
+
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="Enter your password"
+                            autocomplete="current-password"
+                            required
+                        >
+
+                        <button
+                            type="button"
+                            class="password-toggle"
+                            id="togglePassword"
+                            aria-label="Show password"
+                        >
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="options">
+
+                    <label class="remember">
+                        <input type="checkbox" name="remember" value="yes">
+                        Remember me
+                    </label>
+
+                    <a href="#" class="forgot-link" id="openForgot">
+                        Forgot password?
+                    </a>
+
+                </div>
+
+                <button type="submit" class="login-button">
+                    LOGIN TO YOUR ACCOUNT
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+
+            </form>
+
+            <div class="divider">OR CONTINUE WITH</div>
+
+            <div class="social-buttons">
+
+                <button type="button" class="social-button" id="googleLogin">
+                    <i class="fa-brands fa-google google-icon"></i>
+                    Google
+                </button>
+
+                <button type="button" class="social-button" id="facebookLogin">
+                    <i class="fa-brands fa-facebook facebook-icon"></i>
+                    Facebook
+                </button>
+
+            </div>
+
+            <p class="register-text">
+                Don't have an account?
+                <a href="{{ url_for('register') }}">Register Now</a>
+            </p>
+
+        </section>
+
+    </main>
+
+    <!-- FORGOT PASSWORD MODAL -->
+
+    <div class="modal" id="forgotModal">
+
+        <div class="modal-content">
+
+            <button class="modal-close" id="closeForgot" type="button">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="modal-icon">
+                <i class="fa-solid fa-envelope-open-text"></i>
+            </div>
+
+            <h2>Forgot Password?</h2>
+
+            <p>
+                No worries! Enter your registered email address.
+                We will send you a secure password reset link.
+            </p>
+
+            <form id="forgotForm">
+
+                <label for="forgotEmail">Registered Email Address</label>
+
+                <input
+                    type="email"
+                    id="forgotEmail"
+                    name="email"
+                    placeholder="Enter your registered email"
+                    required
+                >
+
+                <button type="submit" class="modal-submit" id="sendResetButton">
+                    SEND RESET LINK
+                    <i class="fa-solid fa-paper-plane"></i>
+                </button>
+
+            </form>
+
+            <div class="modal-status" id="forgotStatus"></div>
+
+        </div>
+
+    </div>
+
+    <!-- GOOGLE IDENTITY SERVICES -->
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <script>
+
+        // PASSWORD SHOW / HIDE
+
+        const passwordInput = document.getElementById("password");
+        const togglePassword = document.getElementById("togglePassword");
+
+        togglePassword.addEventListener("click", function () {
+
+            const icon = this.querySelector("i");
+
+            if (passwordInput.type === "password") {
+
+                passwordInput.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+
+            } else {
+
+                passwordInput.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+
+            }
+
+        });
+
+
+        // FORGOT PASSWORD MODAL
+
+        const forgotModal = document.getElementById("forgotModal");
+
+        document.getElementById("openForgot").addEventListener("click", function (e) {
+
+            e.preventDefault();
+            forgotModal.classList.add("active");
+
+        });
+
+        document.getElementById("closeForgot").addEventListener("click", function () {
+
+            forgotModal.classList.remove("active");
+
+        });
+
+        forgotModal.addEventListener("click", function (e) {
+
+            if (e.target === forgotModal) {
+                forgotModal.classList.remove("active");
+            }
+
+        });
+
+
+        // SEND RESET LINK
+
+        document.getElementById("forgotForm").addEventListener("submit", async function (e) {
+
+            e.preventDefault();
+
+            const email = document.getElementById("forgotEmail").value.trim();
+            const status = document.getElementById("forgotStatus");
+            const button = document.getElementById("sendResetButton");
+
+            button.disabled = true;
+            button.innerHTML = "SENDING...";
+
+            status.style.color = "#555";
+            status.textContent = "Please wait while we process your request.";
+
+            try {
+
+                const response = await fetch("{{ url_for('forgot_password') }}", {
+
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        email: email
+                    })
+
+                });
+
+                const data = await response.json();
+
+                status.style.color = data.success ? "green" : "#c0392b";
+                status.textContent = data.message || "Request completed.";
+
+            } catch (error) {
+
+                status.style.color = "#c0392b";
+                status.textContent = "Unable to connect. Please try again.";
+
+            }
+
+            button.disabled = false;
+            button.innerHTML = 'SEND RESET LINK <i class="fa-solid fa-paper-plane"></i>';
+
+        });
+
+
+        // GOOGLE LOGIN
+
+        document.getElementById("googleLogin").addEventListener("click", function () {
+
+            if (!window.google || !google.accounts || !google.accounts.id) {
+
+                alert("Google Login is loading. Please try again.");
+                return;
+
+            }
+
+            google.accounts.id.prompt();
+
+        });
+
+
+        // GOOGLE ID TOKEN CALLBACK
+
+        window.addEventListener("load", function () {
+
+            if (!window.google || !google.accounts || !google.accounts.id) {
+                return;
+            }
+
+            google.accounts.id.initialize({
+
+                client_id: "{{ google_client_id }}",
+
+                callback: async function (response) {
+
+                    try {
+
+                        const result = await fetch("{{ url_for('google_login') }}", {
+
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+
+                            body: JSON.stringify({
+                                credential: response.credential
+                            })
+
+                        });
+
+                        const data = await result.json();
+
+                        if (data.success) {
+
+                            window.location.href =
+                                data.redirect_url || data.redirect || "{{ url_for('dashboard') }}";
+
+                        } else {
+
+                            alert(data.message || "Google login failed.");
+
+                        }
+
+                    } catch (error) {
+
+                        alert("Unable to login with Google. Please try again.");
+
+                    }
+
+                }
+
+            });
+
+        });
+
+
+        // FACEBOOK LOGIN
+
+        document.getElementById("facebookLogin").addEventListener("click", function () {
+
+            alert(
+                "Facebook Login requires a Meta Developer App and Facebook OAuth configuration."
+            );
+
+        });
+
+
+        // FLASH MESSAGE SUPPORT
+
+        const flashMessage = {{ get_flashed_messages(with_categories=true) | tojson }};
+
+        if (flashMessage.length > 0) {
+
+            const messageBox = document.getElementById("loginMessage");
+            const latest = flashMessage[flashMessage.length - 1];
+
+            messageBox.textContent = latest[1];
+            messageBox.className =
+                "message " + (latest[0] === "success" ? "success" : "error");
+
+        }
+
+    </script>
+
+</body>
+</html>

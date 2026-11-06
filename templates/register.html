@@ -1,0 +1,2176 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Create Account | Travel India</title>
+
+    <meta name="description" content="Create your Travel India account and discover incredible destinations across India.">
+
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap"
+          rel="stylesheet">
+
+    <style>
+
+/* =========================================
+   1. GLOBAL RESET & ROOT VARIABLES
+========================================= */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #f47b20;
+    --primary-dark: #d95c0a;
+    --primary-light: #ffad65;
+
+    --white: #ffffff;
+    --dark: #101820;
+
+    --text-light: rgba(255,255,255,0.92);
+    --text-muted: rgba(255,255,255,0.72);
+
+    --border: rgba(255,255,255,0.55);
+
+    --glass: rgba(255,255,255,0.12);
+
+    --shadow:
+        0 15px 40px rgba(0,0,0,0.25);
+}
+
+html {
+    scroll-behavior: smooth;
+    min-height: 100%;
+}
+
+body {
+    width: 100%;
+    min-height: 100vh;
+    overflow-x: hidden;
+
+    font-family: 'DM Sans', sans-serif;
+
+    color: var(--white);
+
+    background: #18202b;
+
+    background-image:
+        linear-gradient(
+            90deg,
+            rgba(8,16,27,0.82),
+            rgba(8,16,27,0.48),
+            rgba(8,16,27,0.18)
+        ),
+        url("{{ url_for('static', filename='images/banner.jpg') }}");
+
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+/* =========================================
+   2. BACKGROUND OVERLAY
+========================================= */
+
+body::before {
+    content: "";
+
+    position: fixed;
+    inset: 0;
+
+    z-index: 0;
+
+    pointer-events: none;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(0,0,0,0.15),
+            transparent 45%,
+            rgba(0,0,0,0.25)
+        );
+}
+
+/* =========================================
+   3. NAVBAR
+========================================= */
+
+.navbar {
+    position: absolute;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+
+    padding: 23px 7%;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    z-index: 10;
+}
+
+/* BRAND */
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 13px;
+
+    color: var(--white);
+
+    text-decoration: none;
+
+    font-size: 23px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    transition: 0.3s ease;
+}
+
+.brand:hover {
+    transform: translateY(-2px);
+}
+
+/* LOGO IMAGE */
+
+.brand img {
+    width: 54px;
+    height: 54px;
+
+    object-fit: contain;
+
+    display: block;
+
+    padding: 4px;
+
+    border-radius: 13px;
+
+    background: rgba(255,255,255,0.96);
+
+    box-shadow:
+        0 5px 20px rgba(0,0,0,0.22),
+        0 0 18px rgba(255,145,53,0.18);
+
+    transition: 0.35s ease;
+}
+
+.brand:hover img {
+    transform: scale(1.07) rotate(-3deg);
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,0.3),
+        0 0 22px rgba(255,145,53,0.35);
+}
+
+/* BRAND TEXT */
+
+.brand span {
+    color: #ffffff;
+
+    font-family: 'Playfair Display', serif;
+
+    font-size: 23px;
+    font-weight: 800;
+
+    letter-spacing: 1px;
+}
+
+.brand span strong {
+    color: #ff9b43;
+}
+
+/* HOME BUTTON */
+
+.nav-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 9px;
+
+    padding: 11px 21px;
+
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    border: 1px solid rgba(255,255,255,0.65);
+
+    border-radius: 30px;
+
+    background: rgba(255,255,255,0.09);
+
+    backdrop-filter: blur(12px);
+
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #d95c0a;
+
+    background: #ffffff;
+
+    border-color: #ffffff;
+
+    transform: translateY(-3px);
+
+    box-shadow: 0 7px 20px rgba(0,0,0,0.2);
+}
+
+/* =========================================
+   4. MAIN CONTAINER
+========================================= */
+
+.main-container {
+    position: relative;
+
+    z-index: 1;
+
+    width: 100%;
+    min-height: 100vh;
+
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+
+    padding: 115px 10% 45px 5%;
+}
+
+/* =========================================
+   5. REGISTER SECTION
+========================================= */
+
+.register-section {
+    width: 100%;
+    max-width: 455px;
+
+    color: #ffffff;
+
+    animation: registerEntrance 0.9s ease both;
+}
+
+@keyframes registerEntrance {
+
+    from {
+        opacity: 0;
+        transform: translateY(35px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+/* =========================================
+   6. WELCOME BADGE
+========================================= */
+
+.welcome-tag {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 9px 16px;
+
+    margin-bottom: 19px;
+
+    border: 1px solid rgba(255,255,255,0.3);
+
+    border-radius: 30px;
+
+    background: rgba(255,255,255,0.12);
+
+    backdrop-filter: blur(12px);
+
+    color: #ffffff;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.8px;
+
+    box-shadow: 0 5px 18px rgba(0,0,0,0.12);
+}
+
+.welcome-tag i {
+    color: #ffad65;
+    font-size: 14px;
+}
+
+/* =========================================
+   7. MAIN HEADING
+========================================= */
+
+.heading {
+    font-family: 'Playfair Display', serif;
+
+    font-size: clamp(37px, 4vw, 49px);
+
+    font-weight: 800;
+
+    line-height: 1.17;
+
+    margin-bottom: 12px;
+
+    color: #ffffff;
+
+    text-shadow: 0 4px 18px rgba(0,0,0,0.3);
+}
+
+.heading span {
+    color: #ff9b43;
+}
+
+/* SUBTITLE */
+
+.subtitle {
+    max-width: 440px;
+
+    font-size: 13px;
+
+    font-weight: 400;
+
+    line-height: 1.8;
+
+    color: rgba(255,255,255,0.88);
+
+    margin-bottom: 26px;
+}
+
+/* =========================================
+   8. REGISTRATION FORM
+========================================= */
+
+.register-form {
+    width: 100%;
+}
+
+.form-group {
+    width: 100%;
+
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #ffffff;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.8px;
+}
+
+/* =========================================
+   9. INPUT WRAPPER
+========================================= */
+
+.input-wrapper {
+    position: relative;
+
+    width: 100%;
+    height: 47px;
+
+    display: flex;
+    align-items: center;
+
+    border-bottom: 1.5px solid rgba(255,255,255,0.68);
+
+    transition: all 0.3s ease;
+}
+
+.input-wrapper:focus-within {
+    border-bottom: 2px solid #ffad65;
+
+    filter: drop-shadow(
+        0 3px 7px rgba(255,137,36,0.28)
+    );
+}
+
+.input-icon {
+    flex-shrink: 0;
+
+    width: 34px;
+
+    color: #ffad65;
+
+    font-size: 15px;
+
+    transition: 0.3s ease;
+}
+
+.input-wrapper:focus-within .input-icon {
+    color: #ffffff;
+}
+
+.input-wrapper input {
+    flex: 1;
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 0;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-family: 'DM Sans', sans-serif;
+
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.input-wrapper input::placeholder {
+    color: rgba(255,255,255,0.72);
+
+    font-size: 12px;
+}
+
+.input-wrapper input:-webkit-autofill,
+.input-wrapper input:-webkit-autofill:hover,
+.input-wrapper input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff;
+
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* =========================================
+   10. PASSWORD VISIBILITY BUTTON
+========================================= */
+
+.toggle-password {
+    flex-shrink: 0;
+
+    display: grid;
+    place-items: center;
+
+    width: 38px;
+    height: 38px;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color: #ffffff;
+
+    font-size: 14px;
+
+    cursor: pointer;
+
+    transition: 0.3s ease;
+}
+
+.toggle-password:hover {
+    color: #ffad65;
+
+    transform: scale(1.12);
+}
+
+/* =========================================
+   11. EMAIL VERIFICATION
+========================================= */
+
+.email-row {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    width: 100%;
+}
+
+.email-row .input-wrapper {
+    flex: 1;
+
+    min-width: 0;
+}
+
+/* VERIFY BUTTON */
+
+.verify-btn {
+    flex-shrink: 0;
+
+    height: 39px;
+
+    padding: 0 14px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    border: 1px solid #ff9b43;
+
+    border-radius: 7px;
+
+    background: rgba(255,145,53,0.18);
+
+    color: #ffffff;
+
+    font-family: 'DM Sans', sans-serif;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+.verify-btn:hover {
+    background: linear-gradient(
+        135deg,
+        #ff9b43,
+        #e85c12
+    );
+
+    border-color: #ff9b43;
+
+    transform: translateY(-2px);
+
+    box-shadow: 0 5px 14px rgba(226,92,14,0.3);
+}
+
+.verify-btn:disabled {
+    opacity: 0.65;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+/* =========================================
+   12. OTP AREA
+========================================= */
+
+.otp-area {
+    display: none;
+
+    width: 100%;
+
+    margin-top: 13px;
+
+    padding: 15px;
+
+    border: 1px solid rgba(255,255,255,0.32);
+
+    border-radius: 10px;
+
+    background: rgba(0,0,0,0.27);
+
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 7px 22px rgba(0,0,0,0.13);
+
+    animation: otpEntrance 0.35s ease;
+}
+
+.otp-area.show {
+    display: block;
+}
+
+@keyframes otpEntrance {
+
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+.otp-title {
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    margin-bottom: 11px;
+
+    color: #ffffff;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+.otp-title i {
+    color: #ffad65;
+}
+
+/* OTP INPUT ROW */
+
+.otp-row {
+    display: flex;
+
+    align-items: center;
+
+    gap: 10px;
+}
+
+.otp-row input {
+    flex: 1;
+
+    min-width: 0;
+
+    height: 41px;
+
+    padding: 0 12px;
+
+    outline: none;
+
+    border: 1px solid rgba(255,255,255,0.5);
+
+    border-radius: 6px;
+
+    background: rgba(255,255,255,0.1);
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 16px;
+
+    letter-spacing: 5px;
+
+    transition: 0.3s;
+}
+
+.otp-row input:focus {
+    border-color: #ffad65;
+
+    box-shadow: 0 0 0 3px rgba(255,155,67,0.13);
+}
+
+.otp-row input::placeholder {
+    color: rgba(255,255,255,0.65);
+
+    font-size: 10px;
+
+    letter-spacing: 1px;
+}
+
+.otp-row button {
+    height: 41px;
+
+    padding: 0 14px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #ffffff;
+
+    color: #d95c0a;
+
+    font-family: inherit;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+.otp-row button:hover {
+    background: #ffad65;
+
+    color: #ffffff;
+}
+
+.otp-row button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+.otp-hint {
+    margin-top: 9px;
+
+    color: rgba(255,255,255,0.72);
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+/* VERIFIED TEXT */
+
+.verified-text {
+    display: none;
+
+    margin-top: 9px;
+
+    color: #7dffb1;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+.verified-text.show {
+    display: block;
+}
+
+.verified-text i {
+    margin-right: 5px;
+}
+
+/* =========================================
+   13. PASSWORD HINT
+========================================= */
+
+.password-hint {
+    margin-top: 6px;
+
+    color: rgba(255,255,255,0.73);
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+/* =========================================
+   14. REGISTER BUTTON
+========================================= */
+
+.register-btn {
+    position: relative;
+
+    overflow: hidden;
+
+    width: 100%;
+    min-height: 51px;
+
+    margin-top: 10px;
+
+    padding: 13px 18px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 11px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: linear-gradient(
+        115deg,
+        #ff9b43,
+        #f36b16,
+        #df520c
+    );
+
+    color: #ffffff;
+
+    font-family: 'DM Sans', sans-serif;
+
+    font-size: 13px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 7px 22px rgba(226,92,14,0.32);
+
+    transition: all 0.3s ease;
+}
+
+.register-btn:hover:not(:disabled) {
+    transform: translateY(-3px);
+
+    box-shadow:
+        0 12px 28px rgba(226,92,14,0.48);
+
+    background: linear-gradient(
+        115deg,
+        #ffad65,
+        #f47b20,
+        #e85c12
+    );
+}
+
+.register-btn:active:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.register-btn:disabled {
+    opacity: 0.55;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+.register-btn i {
+    font-size: 14px;
+
+    transition: transform 0.3s ease;
+}
+
+.register-btn:hover:not(:disabled) i {
+    transform: translateX(5px);
+}
+
+/* =========================================
+   15. DIVIDER
+========================================= */
+
+.divider {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    margin: 22px 0 16px;
+
+    color: rgba(255,255,255,0.82);
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    letter-spacing: 1px;
+}
+
+.divider::before,
+.divider::after {
+    content: "";
+
+    flex: 1;
+
+    height: 1px;
+
+    background: rgba(255,255,255,0.42);
+}
+
+/* =========================================
+   16. SOCIAL LOGIN BUTTONS
+========================================= */
+
+.social-buttons {
+    width: 100%;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 14px;
+}
+
+.social-btn {
+    width: 53px;
+    height: 47px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid rgba(255,255,255,0.55);
+
+    border-radius: 9px;
+
+    background: rgba(255,255,255,0.13);
+
+    backdrop-filter: blur(10px);
+
+    color: #ffffff;
+
+    font-size: 19px;
+
+    text-decoration: none;
+
+    cursor: pointer;
+
+    transition: all 0.3s ease;
+}
+
+.social-btn:hover {
+    background: #ffffff;
+
+    transform: translateY(-4px);
+
+    box-shadow: 0 7px 20px rgba(0,0,0,0.2);
+}
+
+.google-btn:hover {
+    color: #4285F4;
+}
+
+.facebook-btn:hover {
+    color: #1877F2;
+}
+
+.social-caption {
+    margin-top: 11px;
+
+    color: rgba(255,255,255,0.77);
+
+    font-size: 10px;
+
+    text-align: center;
+}
+
+/* =========================================
+   17. LOGIN LINK
+========================================= */
+
+.login-text {
+    margin-top: 22px;
+
+    color: rgba(255,255,255,0.92);
+
+    font-size: 12px;
+
+    text-align: center;
+
+    line-height: 1.8;
+}
+
+.login-text a {
+    display: inline-block;
+
+    margin-left: 4px;
+
+    color: #ffad65;
+
+    font-weight: 800;
+
+    text-decoration: none;
+
+    transition: 0.3s;
+}
+
+.login-text a:hover {
+    color: #ffffff;
+
+    text-decoration: underline;
+}
+
+.login-text a i {
+    margin-left: 4px;
+
+    font-size: 10px;
+}
+
+/* =========================================
+   18. FOOTER
+========================================= */
+
+.footer-text {
+    margin-top: 22px;
+
+    color: rgba(255,255,255,0.68);
+
+    font-size: 9px;
+
+    font-weight: 500;
+
+    letter-spacing: 0.7px;
+
+    text-align: center;
+
+    line-height: 1.7;
+}
+
+/* =========================================
+   19. ALERT MESSAGES
+========================================= */
+
+.message {
+    display: none;
+
+    width: 100%;
+
+    padding: 11px 13px;
+
+    margin-bottom: 15px;
+
+    border-radius: 7px;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    line-height: 1.6;
+
+    backdrop-filter: blur(10px);
+}
+
+.message.show {
+    display: block;
+
+    animation: alertEntrance 0.3s ease;
+}
+
+@keyframes alertEntrance {
+
+    from {
+        opacity: 0;
+        transform: translateY(-7px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+}
+
+.message.error {
+    background: rgba(190,35,35,0.3);
+
+    border: 1px solid rgba(255,100,100,0.65);
+
+    color: #ffffff;
+}
+
+.message.success {
+    background: rgba(20,150,75,0.28);
+
+    border: 1px solid rgba(80,255,150,0.55);
+
+    color: #ffffff;
+}
+
+/* =========================================
+   20. INPUT VALIDATION
+========================================= */
+
+.input-wrapper input:focus::placeholder {
+    opacity: 0.65;
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+    outline: 2px solid #ffad65;
+
+    outline-offset: 3px;
+}
+
+/* =========================================
+   21. TABLET RESPONSIVE
+========================================= */
+
+@media (max-width: 1024px) {
+
+    .navbar {
+        padding: 22px 5%;
+    }
+
+    .main-container {
+        padding: 115px 7% 40px 5%;
+    }
+
+    .register-section {
+        max-width: 430px;
+    }
+
+    .heading {
+        font-size: 43px;
+    }
+
+}
+
+/* =========================================
+   22. MOBILE RESPONSIVE
+========================================= */
+
+@media (max-width: 768px) {
+
+    body {
+        background-image:
+            linear-gradient(
+                180deg,
+                rgba(5,12,22,0.66),
+                rgba(5,12,22,0.78)
+            ),
+            url("{{ url_for('static', filename='images/mobile.jpg') }}");
+
+        background-position: center;
+
+        background-attachment: scroll;
+
+        background-size: cover;
+    }
+
+    .navbar {
+        position: absolute;
+
+        top: 0;
+        left: 0;
+
+        width: 100%;
+
+        padding: 17px 6%;
+    }
+
+    .brand {
+        gap: 9px;
+
+        font-size: 19px;
+    }
+
+    .brand img {
+        width: 43px;
+        height: 43px;
+
+        padding: 3px;
+
+        border-radius: 10px;
+    }
+
+    .brand span {
+        font-size: 19px;
+
+        letter-spacing: 0.5px;
+    }
+
+    .nav-link {
+        padding: 9px 14px;
+
+        font-size: 11px;
+
+        gap: 6px;
+    }
+
+    .main-container {
+        min-height: 100vh;
+
+        justify-content: center;
+
+        padding: 110px 7% 35px;
+    }
+
+    .register-section {
+        width: 100%;
+
+        max-width: 460px;
+    }
+
+    .welcome-tag {
+        margin-bottom: 15px;
+
+        font-size: 9px;
+
+        padding: 8px 13px;
+    }
+
+    .heading {
+        font-size: 38px;
+
+        line-height: 1.18;
+    }
+
+    .subtitle {
+        font-size: 12px;
+
+        line-height: 1.8;
+
+        margin-bottom: 22px;
+    }
+
+    .form-group {
+        margin-bottom: 14px;
+    }
+
+    .input-wrapper {
+        height: 46px;
+    }
+
+    .register-btn {
+        min-height: 49px;
+    }
+
+}
+
+/* =========================================
+   23. SMALL MOBILE DEVICES
+========================================= */
+
+@media (max-width: 480px) {
+
+    .navbar {
+        padding: 16px 5%;
+    }
+
+    .brand {
+        gap: 8px;
+    }
+
+    .brand img {
+        width: 39px;
+        height: 39px;
+    }
+
+    .brand span {
+        font-size: 16px;
+    }
+
+    .nav-link {
+        padding: 8px 11px;
+
+        font-size: 10px;
+    }
+
+    .main-container {
+        padding: 100px 6% 30px;
+    }
+
+    .register-section {
+        max-width: 100%;
+    }
+
+    .heading {
+        font-size: 35px;
+    }
+
+    .welcome-tag {
+        font-size: 8px;
+
+        letter-spacing: 1.2px;
+    }
+
+    .subtitle {
+        font-size: 11px;
+    }
+
+    .form-group label {
+        font-size: 10px;
+    }
+
+    .input-wrapper input {
+        font-size: 12px;
+    }
+
+    .input-wrapper input::placeholder {
+        font-size: 11px;
+    }
+
+    .email-row {
+        gap: 7px;
+    }
+
+    .verify-btn {
+        padding: 0 9px;
+
+        font-size: 9px;
+    }
+
+    .otp-area {
+        padding: 12px;
+    }
+
+    .otp-row {
+        gap: 7px;
+    }
+
+    .otp-row button {
+        padding: 0 10px;
+
+        font-size: 9px;
+    }
+
+    .register-btn {
+        font-size: 12px;
+    }
+
+    .login-text {
+        font-size: 11px;
+    }
+
+}
+
+/* =========================================
+   24. EXTRA SMALL MOBILE
+========================================= */
+
+@media (max-width: 360px) {
+
+    .brand span {
+        font-size: 14px;
+    }
+
+    .brand img {
+        width: 36px;
+        height: 36px;
+    }
+
+    .nav-link {
+        padding: 7px 9px;
+
+        font-size: 9px;
+    }
+
+    .heading {
+        font-size: 31px;
+    }
+
+    .main-container {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+
+    .email-row {
+        gap: 5px;
+    }
+
+    .verify-btn {
+        padding: 0 7px;
+
+        font-size: 8px;
+    }
+
+    .otp-row input {
+        letter-spacing: 3px;
+
+        padding: 0 8px;
+    }
+
+    .social-btn {
+        width: 48px;
+        height: 43px;
+    }
+
+}
+
+/* =========================================
+   25. SHORT LAPTOP / SMALL HEIGHT SCREENS
+========================================= */
+
+@media (min-width: 769px) and (max-height: 850px) {
+
+    .navbar {
+        padding-top: 15px;
+        padding-bottom: 15px;
+    }
+
+    .brand img {
+        width: 46px;
+        height: 46px;
+    }
+
+    .main-container {
+        padding-top: 90px;
+        padding-bottom: 25px;
+    }
+
+    .register-section {
+        max-width: 445px;
+    }
+
+    .welcome-tag {
+        margin-bottom: 12px;
+
+        padding: 7px 13px;
+    }
+
+    .heading {
+        font-size: 39px;
+
+        margin-bottom: 8px;
+    }
+
+    .subtitle {
+        margin-bottom: 17px;
+
+        font-size: 12px;
+    }
+
+    .form-group {
+        margin-bottom: 10px;
+    }
+
+    .input-wrapper {
+        height: 40px;
+    }
+
+    .register-btn {
+        min-height: 45px;
+
+        margin-top: 6px;
+    }
+
+    .divider {
+        margin: 15px 0 12px;
+    }
+
+    .social-btn {
+        height: 40px;
+    }
+
+    .login-text {
+        margin-top: 13px;
+    }
+
+    .footer-text {
+        margin-top: 13px;
+    }
+
+}
+
+/* =========================================
+   26. ACCESSIBILITY - REDUCED MOTION
+========================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+
+        animation-duration: 0.01ms !important;
+
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 0.01ms !important;
+    }
+
+}
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+
+<nav class="navbar">
+
+    <a href="{{ url_for('index') }}" class="brand">
+
+        <img
+            src="{{ url_for('static', filename='images/logo.png') }}"
+            alt="Travel India Logo"
+        >
+
+        <span>
+            TRAVEL <strong>INDIA</strong>
+        </span>
+
+    </a>
+
+    <a href="{{ url_for('index') }}" class="nav-link">
+        <i class="fa-solid fa-house"></i>
+        Home
+    </a>
+
+</nav>
+
+
+    <!-- Registration Section -->
+
+    <main class="main-container">
+
+        <section class="register-section">
+
+            <div class="welcome-tag">
+                <i class="fa-solid fa-compass"></i>
+                YOUR JOURNEY STARTS HERE
+            </div>
+
+            <h1 class="heading">
+                Create Your <span>Account.</span>
+            </h1>
+
+            <p class="subtitle">
+                Join Travel India and discover breathtaking destinations,
+                unforgettable journeys and incredible experiences.
+            </p>
+
+
+            <!-- Flask Flash Messages -->
+
+            <div class="message error" id="errorMessage"></div>
+            <div class="message success" id="successMessage"></div>
+
+
+            <!-- Registration Form -->
+
+            <form class="register-form"
+                  id="registerForm"
+                  action="{{ url_for('register') }}"
+                  method="POST">
+
+                <!-- CSRF token, if Flask-WTF is enabled -->
+                {% if csrf_token is defined %}
+                    <input type="hidden" name="csrf_token"
+                           value="{{ csrf_token() }}">
+                {% endif %}
+
+                <input type="hidden" name="email_verified"
+                       id="emailVerified" value="0">
+
+
+                <!-- Username -->
+
+                <div class="form-group">
+
+                    <label for="username">FULL NAME</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-regular fa-user input-icon"></i>
+
+                        <input type="text"
+                               id="username"
+                               name="username"
+                               placeholder="Enter your full name"
+                               minlength="3"
+                               maxlength="60"
+                               autocomplete="name"
+                               required>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Email -->
+
+                <div class="form-group">
+
+                    <label for="email">EMAIL ADDRESS</label>
+
+                    <div class="email-row">
+
+                        <div class="input-wrapper">
+
+                            <i class="fa-regular fa-envelope input-icon"></i>
+
+                            <input type="email"
+                                   id="email"
+                                   name="email"
+                                   placeholder="Enter your email address"
+                                   autocomplete="email"
+                                   required>
+
+                        </div>
+
+                        <button type="button"
+                                class="verify-btn"
+                                id="sendOtpBtn">
+
+                            <i class="fa-solid fa-shield-halved"></i>
+                            Verify Email
+
+                        </button>
+
+                    </div>
+
+
+                    <!-- OTP Box -->
+
+                    <div class="otp-area" id="otpArea">
+
+                        <div class="otp-title">
+                            <i class="fa-solid fa-envelope-circle-check"></i>
+                            Enter the OTP sent to your email
+                        </div>
+
+                        <div class="otp-row">
+
+                            <input type="text"
+                                   id="otp"
+                                   name="otp"
+                                   placeholder="6-digit OTP"
+                                   maxlength="6"
+                                   inputmode="numeric"
+                                   autocomplete="one-time-code">
+
+                            <button type="button" id="verifyOtpBtn">
+                                Verify OTP
+                            </button>
+
+                        </div>
+
+                        <p class="otp-hint">
+                            Please check your inbox and spam folder.
+                        </p>
+
+                    </div>
+
+                    <div class="verified-text" id="verifiedText">
+                        <i class="fa-solid fa-circle-check"></i>
+                        Email successfully verified!
+                    </div>
+
+                </div>
+
+
+                <!-- Mobile Number -->
+
+                <div class="form-group">
+
+                    <label for="mobile">MOBILE NUMBER</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-mobile-screen-button input-icon"></i>
+
+                        <input type="tel"
+                               id="mobile"
+                               name="mobile"
+                               placeholder="Enter 10-digit mobile number"
+                               pattern="[6-9][0-9]{9}"
+                               maxlength="10"
+                               inputmode="numeric"
+                               autocomplete="tel"
+                               required>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Password -->
+
+                <div class="form-group">
+
+                    <label for="password">PASSWORD</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock input-icon"></i>
+
+                        <input type="password"
+                               id="password"
+                               name="password"
+                               placeholder="Create a strong password"
+                               minlength="8"
+                               autocomplete="new-password"
+                               required>
+
+                        <button type="button"
+                                class="toggle-password"
+                                data-target="password"
+                                aria-label="Show password">
+
+                            <i class="fa-regular fa-eye"></i>
+
+                        </button>
+
+                    </div>
+
+                    <p class="password-hint">
+                        Minimum 8 characters.
+                    </p>
+
+                </div>
+
+
+                <!-- Confirm Password -->
+
+                <div class="form-group">
+
+                    <label for="confirmPassword">CONFIRM PASSWORD</label>
+
+                    <div class="input-wrapper">
+
+                        <i class="fa-solid fa-lock input-icon"></i>
+
+                        <input type="password"
+                               id="confirmPassword"
+                               name="confirm_password"
+                               placeholder="Re-enter your password"
+                               minlength="8"
+                               autocomplete="new-password"
+                               required>
+
+                        <button type="button"
+                                class="toggle-password"
+                                data-target="confirmPassword"
+                                aria-label="Show password">
+
+                            <i class="fa-regular fa-eye"></i>
+
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Register Button -->
+
+                <button type="submit"
+                        class="register-btn"
+                        id="registerBtn"
+                        disabled>
+
+                    CREATE ACCOUNT
+                    <i class="fa-solid fa-arrow-right"></i>
+
+                </button>
+
+            </form>
+
+
+            <!-- Social Login -->
+
+            <div class="divider">
+                OR CONTINUE WITH
+            </div>
+
+            <div class="social-buttons">
+
+                <!-- Google Login -->
+
+                <button type="button"
+                        class="social-btn google-btn"
+                        id="googleButton"
+                        aria-label="Continue with Google">
+
+                    <i class="fa-brands fa-google"></i>
+
+                </button>
+
+
+                <!-- Facebook Login -->
+
+                <a href="#"
+                   class="social-btn facebook-btn"
+                   id="facebookButton"
+                   aria-label="Continue with Facebook">
+
+                    <i class="fa-brands fa-facebook-f"></i>
+
+                </a>
+
+            </div>
+
+            <p class="social-caption">
+                Sign up securely using your social account.
+            </p>
+
+
+            <!-- Already Have Account -->
+
+            <div class="login-text">
+
+                Already have an account?
+
+                <a href="{{ url_for('login') }}">
+                    Please Login <i class="fa-solid fa-arrow-right"></i>
+                </a>
+
+            </div>
+
+
+            <p class="footer-text">
+                © 2026 TRAVEL INDIA. DISCOVER INDIA. EXPLORE BEYOND.
+            </p>
+
+        </section>
+
+    </main>
+
+
+    <!-- JavaScript -->
+
+    <script>
+
+        const emailInput = document.getElementById("email");
+        const sendOtpBtn = document.getElementById("sendOtpBtn");
+        const otpArea = document.getElementById("otpArea");
+        const otpInput = document.getElementById("otp");
+        const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+
+        const registerForm = document.getElementById("registerForm");
+        const registerBtn = document.getElementById("registerBtn");
+
+        const emailVerified = document.getElementById("emailVerified");
+        const verifiedText = document.getElementById("verifiedText");
+
+        const errorMessage = document.getElementById("errorMessage");
+        const successMessage = document.getElementById("successMessage");
+
+        let verifiedEmail = "";
+
+
+        // Alerts
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.add("show");
+            successMessage.classList.remove("show");
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.classList.add("show");
+            errorMessage.classList.remove("show");
+        }
+
+        function clearMessages() {
+            errorMessage.classList.remove("show");
+            successMessage.classList.remove("show");
+        }
+
+
+        // Reset verification when email changes
+
+        emailInput.addEventListener("input", function () {
+
+            if (emailInput.value.trim().toLowerCase() !== verifiedEmail.toLowerCase()) {
+
+                emailVerified.value = "0";
+                verifiedEmail = "";
+
+                otpArea.classList.remove("show");
+                verifiedText.classList.remove("show");
+
+                registerBtn.disabled = true;
+
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.innerHTML =
+                    '<i class="fa-solid fa-shield-halved"></i> Verify Email';
+            }
+
+        });
+
+
+        // Send OTP
+
+        sendOtpBtn.addEventListener("click", async function () {
+
+            clearMessages();
+
+            const email = emailInput.value.trim();
+
+            if (!emailInput.checkValidity() || !email) {
+                showError("Please enter a valid email address.");
+                emailInput.focus();
+                return;
+            }
+
+            sendOtpBtn.disabled = true;
+            sendOtpBtn.textContent = "Sending...";
+
+            try {
+
+                const response = await fetch(
+                    "{{ url_for('send_otp') }}",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email: email
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Unable to send OTP.");
+                }
+
+                otpArea.classList.add("show");
+                otpInput.focus();
+
+                showSuccess(data.message || "OTP sent successfully. Check your email.");
+
+                sendOtpBtn.textContent = "OTP Sent";
+
+            } catch (error) {
+
+                showError(error.message);
+
+                sendOtpBtn.disabled = false;
+                sendOtpBtn.textContent = "Verify Email";
+
+            }
+
+        });
+
+
+        // Only allow digits in OTP
+
+        otpInput.addEventListener("input", function () {
+            this.value = this.value.replace(/\D/g, "").slice(0, 6);
+        });
+
+
+        // Verify OTP
+
+        verifyOtpBtn.addEventListener("click", async function () {
+
+            clearMessages();
+
+            const email = emailInput.value.trim();
+            const otp = otpInput.value.trim();
+
+            if (otp.length !== 6) {
+                showError("Please enter the complete 6-digit OTP.");
+                return;
+            }
+
+            verifyOtpBtn.disabled = true;
+            verifyOtpBtn.textContent = "Checking...";
+
+            try {
+
+                const response = await fetch(
+                    "{{ url_for('verify_otp') }}",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            otp: otp
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Invalid OTP.");
+                }
+
+                verifiedEmail = email;
+
+                emailVerified.value = "1";
+
+                otpArea.classList.remove("show");
+                verifiedText.classList.add("show");
+
+                registerBtn.disabled = false;
+
+                sendOtpBtn.disabled = true;
+                sendOtpBtn.textContent = "Verified ✓";
+
+                showSuccess("Your email has been verified successfully!");
+
+            } catch (error) {
+
+                showError(error.message);
+
+            } finally {
+
+                verifyOtpBtn.disabled = false;
+                verifyOtpBtn.textContent = "Verify OTP";
+
+            }
+
+        });
+
+
+        // Show / Hide Password
+
+        document.querySelectorAll(".toggle-password").forEach(button => {
+
+            button.addEventListener("click", function () {
+
+                const target = document.getElementById(
+                    this.dataset.target
+                );
+
+                const icon = this.querySelector("i");
+
+                if (target.type === "password") {
+
+                    target.type = "text";
+                    icon.classList.replace("fa-eye", "fa-eye-slash");
+
+                } else {
+
+                    target.type = "password";
+                    icon.classList.replace("fa-eye-slash", "fa-eye");
+
+                }
+
+            });
+
+        });
+
+
+        // Password matching
+
+        registerForm.addEventListener("submit", function (event) {
+
+            const password = document.getElementById("password").value;
+            const confirmPassword =
+                document.getElementById("confirmPassword").value;
+
+            if (password !== confirmPassword) {
+
+                event.preventDefault();
+                showError("Password and Confirm Password do not match.");
+                return;
+
+            }
+
+            if (emailVerified.value !== "1" ||
+                emailInput.value.trim().toLowerCase() !== verifiedEmail.toLowerCase()) {
+
+                event.preventDefault();
+                showError("Please verify your email before creating an account.");
+                return;
+
+            }
+
+        });
+
+
+        // Google Sign In
+
+        function handleGoogleCredential(response) {
+
+            fetch("{{ url_for('google_login') }}", {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+
+                body: JSON.stringify({
+                    credential: response.credential
+                })
+
+            })
+
+            .then(async response => {
+
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || "Google sign-in failed.");
+                }
+
+               window.location.href = data.redirect ||
+    data.redirect_url ||
+    "{{ url_for('dashboard') }}";
+
+            })
+
+            .catch(error => {
+
+                showError(error.message);
+
+            });
+
+        }
+
+
+        // Initialize Google Identity
+
+        window.addEventListener("load", function () {
+
+            if (window.google &&
+                "{{ google_client_id|default('') }}" !== "") {
+
+                google.accounts.id.initialize({
+
+                    client_id: "{{ google_client_id|default('') }}",
+
+                    callback: handleGoogleCredential
+
+                });
+
+                document.getElementById("googleButton")
+                    .addEventListener("click", function () {
+
+                        google.accounts.id.prompt();
+
+                    });
+
+            } else {
+
+                document.getElementById("googleButton")
+                    .addEventListener("click", function () {
+
+                        showError("Google Sign-In is not configured yet.");
+
+                    });
+
+            }
+
+        });
+
+
+        // Facebook button
+
+        document.getElementById("facebookButton")
+            .addEventListener("click", function (event) {
+
+                event.preventDefault();
+
+                showError(
+                    "Facebook Login requires Facebook OAuth App configuration."
+                );
+
+            });
+
+    </script>
+
+</body>
+</html>
