@@ -272,6 +272,7 @@ def index():
 
 
 
+
 # ==========================================
 # FORGOT PASSWORD ROUTE
 # ==========================================
@@ -283,19 +284,29 @@ def forgot_password():
     cursor = None
 
     try:
+        # Check Resend configuration
+        if not RESEND_API_KEY or not RESEND_FROM_EMAIL:
+            app.logger.error("Resend email configuration is missing.")
+
+            return jsonify({
+                "success": False,
+                "message": "Email service is not configured. Please try again later."
+            }), 500
+
         # Get email from frontend
         data = request.get_json(silent=True) or {}
         email = data.get("email", "").strip().lower()
 
-        if not email:
+        if not email or not re.fullmatch(
+            r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email
+        ):
             return jsonify({
                 "success": False,
-                "message": "Please enter your registered email."
+                "message": "Please enter a valid registered email."
             }), 400
 
         # Connect to MySQL database
         conn = get_db()
-
         cursor = conn.cursor(dictionary=True)
 
         # Check whether email exists
@@ -327,14 +338,8 @@ def forgot_password():
             _external=True
         )
 
-        # Prepare reset email
-        message = EmailMessage()
-
-        message["Subject"] = "Travel India - Password Reset"
-        message["From"] = os.getenv("MAIL_ADDRESS")
-        message["To"] = email
-
-        message.set_content(f"""
+        # Prepare email content
+        email_text = f"""
 Hello,
 
 We received a request to reset your Travel India account password.
@@ -349,19 +354,75 @@ If you did not request this password reset, please ignore this email.
 
 Regards,
 Travel India Team
-""")
+"""
 
-        # Send email using Gmail SMTP
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+        email_html = f"""
+        <div style="font-family: Arial, sans-serif; padding: 20px; max-width: 600px;">
 
-            server.starttls(context=ssl.create_default_context())
+            <h2 style="color: #ff7417;">Travel India - Password Reset</h2>
 
-            server.login(
-                os.getenv("MAIL_ADDRESS"),
-                os.getenv("MAIL_APP_PASSWORD")
-            )
+            <p>Hello,</p>
 
-            server.send_message(message)
+            <p>
+                We received a request to reset your Travel India account password.
+            </p>
+
+            <p>Click the button below to reset your password:</p>
+
+            <a href="{reset_link}"
+               style="
+                   display: inline-block;
+                   background-color: #ff7417;
+                   color: white;
+                   padding: 12px 24px;
+                   text-decoration: none;
+                   border-radius: 6px;
+                   font-weight: bold;
+               ">
+                Reset Password
+            </a>
+
+            <p>
+                Or copy this link into your browser:
+            </p>
+
+            <p>
+                <a href="{reset_link}">{reset_link}</a>
+            </p>
+
+            <p>
+                This link expires in <strong>15 minutes</strong>.
+            </p>
+
+            <p>
+                If you did not request this password reset,
+                please ignore this email.
+            </p>
+
+            <br>
+
+            <p>Regards,<br><strong>Travel India Team</strong></p>
+
+            <p>Discover India. Explore Beyond.</p>
+
+        </div>
+        """
+
+        # Send password reset email using Resend API
+        resend.api_key = RESEND_API_KEY
+
+        response = resend.Emails.send({
+            "from": RESEND_FROM_EMAIL,
+            "to": [email],
+            "subject": "Travel India - Password Reset",
+            "text": email_text,
+            "html": email_html
+        })
+
+        app.logger.info(
+            "Password reset email sent successfully. Resend response: %s",
+            response
+        )
 
         return jsonify({
             "success": True,
@@ -369,7 +430,7 @@ Travel India Team
         })
 
     except Exception:
-        app.logger.exception("Forgot password error")
+        app.logger.exception("Forgot password email sending failed")
 
         return jsonify({
             "success": False,
@@ -377,6 +438,7 @@ Travel India Team
         }), 500
 
     finally:
+
         if cursor is not None:
             cursor.close()
 
@@ -514,32 +576,24 @@ def register():
     )
 
 
-# =========================================================
-# 6A. SEND EMAIL OTP
-# =========================================================
 
 @app.route("/send-otp", methods=["POST"])
 def send_otp():
 
     data = request.get_json(silent=True) or {}
-
     email = data.get("email", "").strip().lower()
 
-    if not re.fullmatch(
-        r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email
-    ):
-
+    if not re.fullmatch(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         return jsonify({
             "success": False,
             "message": "Please enter a valid email address."
         }), 400
 
-    # Email configuration check
-    if not MAIL_ADDRESS or not MAIL_APP_PASSWORD:
-
+    # Resend configuration check
+    if not RESEND_API_KEY or not RESEND_FROM_EMAIL:
         return jsonify({
             "success": False,
-            "message": "Email SMTP configuration is missing. Check your .env file."
+            "message": "Resend email configuration is missing."
         }), 500
 
     # Existing email check
@@ -550,7 +604,6 @@ def send_otp():
     )
 
     if existing_user:
-
         return jsonify({
             "success": False,
             "message": "This email is already registered. Please login."
@@ -558,15 +611,10 @@ def send_otp():
 
     # Resend cooldown
     if session.get("otp_email") == email:
-
         last_sent = session.get("otp_sent_at", 0)
-
-        remaining = OTP_RESEND_SECONDS - (
-            time.time() - last_sent
-        )
+        remaining = OTP_RESEND_SECONDS - (time.time() - last_sent)
 
         if remaining > 0:
-
             return jsonify({
                 "success": False,
                 "message": (
@@ -578,21 +626,14 @@ def send_otp():
     # Generate secure six-digit OTP
     otp = f"{secrets.randbelow(900000) + 100000}"
 
-    # Store HMAC instead of the plain OTP
+    # Store HMAC instead of plain OTP
     otp_hash = hmac.new(
         app.secret_key.encode(),
         f"{email}:{otp}".encode(),
         hashlib.sha256
     ).hexdigest()
 
-    # Prepare email
-    message = EmailMessage()
-
-    message["Subject"] = "Travel India - Email Verification OTP"
-    message["From"] = MAIL_ADDRESS
-    message["To"] = email
-
-    message.set_content(f"""
+    email_text = f"""
 Hello,
 
 Welcome to TRAVEL INDIA!
@@ -608,24 +649,33 @@ Do not share this OTP with anyone.
 Thank you,
 TRAVEL INDIA TEAM
 Discover India. Explore Beyond.
-""")
+"""
+
+    email_html = f"""
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <h2 style="color: #ff7417;">Welcome to TRAVEL INDIA!</h2>
+        <p>Hello,</p>
+        <p>Your email verification OTP is:</p>
+        <h1 style="color: #ff7417; letter-spacing: 5px;">{otp}</h1>
+        <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+        <p>Do not share this OTP with anyone.</p>
+        <p>Thank you,<br><strong>TRAVEL INDIA TEAM</strong></p>
+        <p>Discover India. Explore Beyond.</p>
+    </div>
+    """
 
     try:
+        resend.api_key = RESEND_API_KEY
 
-        with smtplib.SMTP(
-            "smtp.gmail.com", 587, timeout=20
-        ) as server:
+        response = resend.Emails.send({
+            "from": RESEND_FROM_EMAIL,
+            "to": [email],
+            "subject": "Travel India - Email Verification OTP",
+            "text": email_text,
+            "html": email_html
+        })
 
-            server.starttls()
-
-            server.login(
-                MAIL_ADDRESS,
-                MAIL_APP_PASSWORD
-            )
-
-            server.send_message(message)
-
-        # Store OTP verification data
+        # Store OTP only after successful email API response
         session["otp_email"] = email
         session["otp_hash"] = otp_hash
         session["otp_expires"] = time.time() + OTP_EXPIRY_SECONDS
@@ -634,20 +684,20 @@ Discover India. Explore Beyond.
 
         session.pop("verified_email", None)
 
+        logger.info("OTP email sent successfully. Resend response: %s", response)
+
         return jsonify({
             "success": True,
             "message": "OTP sent successfully. Please check your email."
         })
 
     except Exception:
-
-        logger.exception("Email OTP sending failed")
+        logger.exception("Resend OTP email sending failed")
 
         return jsonify({
             "success": False,
-            "message": "Unable to send OTP. Please check SMTP settings."
+            "message": "Unable to send OTP. Please check Resend settings."
         }), 500
-
 
 # =========================================================
 # 6B. VERIFY EMAIL OTP
