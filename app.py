@@ -1148,6 +1148,7 @@ def get_districts(state_id):
 
 
 
+
 # =========================================================
 # 12. FREE OPENSTREETMAP TOURIST PLACES SEARCH
 # =========================================================
@@ -1160,21 +1161,28 @@ def google_places_text_search(
     page_token=None
 ):
     """
-    Discover tourist attractions using:
-    1. Nominatim - Free geocoding
-    2. Overpass API - Free tourist place discovery
-    3. OpenStreetMap - Location information
+    Tourist place discovery using:
+    1. Nominatim geocoding
+    2. Multiple Overpass API servers
+    3. OpenStreetMap location data
 
     Features:
-    - Short network timeouts
+    - Improved network timeouts
     - Multiple Overpass fallback servers
-    - Duplicate place-name removal
-    - Safe handling of API failures
+    - Better coordinate validation
+    - Duplicate detection using name + location
+    - Tourist relevance sorting
+    - Safe API failure handling
     - Frontend-compatible response structure
     """
 
     import re
+    import math
     import requests
+
+    # -----------------------------------------------------
+    # CONFIGURATION
+    # -----------------------------------------------------
 
     OVERPASS_URLS = [
         "https://overpass-api.de/api/interpreter",
@@ -1182,10 +1190,15 @@ def google_places_text_search(
         "https://overpass.private.coffee/api/interpreter"
     ]
 
-    NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+    NOMINATIM_URL = (
+        "https://nominatim.openstreetmap.org/search"
+    )
 
-    headers = {
-        "User-Agent": "TravelIndiaTourismApp/1.0 (tourism discovery)",
+    HEADERS = {
+        "User-Agent": (
+            "TravelIndiaTourismApp/1.0 "
+            "(tourism discovery application)"
+        ),
         "Accept": "application/json"
     }
 
@@ -1195,15 +1208,76 @@ def google_places_text_search(
     }
 
     # -----------------------------------------------------
+    # HELPER 1: NORMALIZE PLACE NAME
+    # -----------------------------------------------------
+
+    def normalize_name(name):
+
+        return re.sub(
+            r"\s+",
+            " ",
+            str(name or "").casefold()
+        ).strip()
+
+    # -----------------------------------------------------
+    # HELPER 2: CHECK VALID COORDINATES
+    # -----------------------------------------------------
+
+    def valid_coordinates(lat, lon):
+
+        try:
+            lat = float(lat)
+            lon = float(lon)
+
+            return (
+                math.isfinite(lat)
+                and math.isfinite(lon)
+                and -90 <= lat <= 90
+                and -180 <= lon <= 180
+            )
+
+        except (TypeError, ValueError):
+
+            return False
+
+    # -----------------------------------------------------
+    # HELPER 3: APPROXIMATE DISTANCE IN KM
+    # -----------------------------------------------------
+
+    def approximate_distance_km(
+        lat1,
+        lon1,
+        lat2,
+        lon2
+    ):
+
+        lat_difference = (lat1 - lat2) * 111
+
+        lon_difference = (
+            (lon1 - lon2)
+            * 111
+            * math.cos(math.radians(lat1))
+        )
+
+        return math.sqrt(
+            lat_difference ** 2
+            + lon_difference ** 2
+        )
+
+    # -----------------------------------------------------
     # 1. VALIDATE SEARCH RADIUS
     # -----------------------------------------------------
 
     try:
+
         radius_km = int(radius_km)
+
     except (TypeError, ValueError):
+
         raise ValueError("Invalid search radius.")
 
     if radius_km not in [5, 10, 25, 50, 100]:
+
         raise ValueError("Invalid search radius.")
 
     radius_meters = radius_km * 1000
@@ -1221,43 +1295,49 @@ def google_places_text_search(
         )
 
         if not location_query:
-            raise ValueError("District name is missing.")
 
-        # Add India only when it is not already present.
-        # Do not force Andhra Pradesh for other states.
+            raise ValueError(
+                "District name is missing."
+            )
+
         if "india" not in location_query.lower():
+
             location_query += ", India"
 
         logger.info(
-            "Geocoding location: %s",
+            "Geocoding tourist location: %s",
             location_query
         )
 
         try:
 
-            geocode_response = requests.get(
-                NOMINATIM_URL,
-                params={
-                    "q": location_query,
-                    "format": "jsonv2",
-                    "limit": 5,
-                    "countrycodes": "in",
-                    "addressdetails": 1
-                },
-                headers=headers,
-                timeout=(2, 5)
-            )
+            with requests.Session() as session:
 
-            geocode_response.raise_for_status()
+                geocode_response = session.get(
+                    NOMINATIM_URL,
+                    params={
+                        "q": location_query,
+                        "format": "jsonv2",
+                        "limit": 5,
+                        "countrycodes": "in",
+                        "addressdetails": 1
+                    },
+                    headers=HEADERS,
+                    timeout=(3, 5)
+                )
 
-            geocode_results = geocode_response.json()
+                geocode_response.raise_for_status()
+
+                geocode_results = (
+                    geocode_response.json()
+                )
 
         except (
             requests.RequestException,
             ValueError
         ) as error:
 
-            logger.warning(
+            logger.exception(
                 "Nominatim geocoding failed: %s",
                 error
             )
@@ -1267,13 +1347,13 @@ def google_places_text_search(
         if not geocode_results:
 
             logger.warning(
-                "Nominatim could not find: %s",
+                "No geocoding results for: %s",
                 location_query
             )
 
             return EMPTY_RESULT
 
-        # Prefer administrative / district-level results.
+        # Prefer administrative results.
         selected_location = geocode_results[0]
 
         for result in geocode_results:
@@ -1298,49 +1378,62 @@ def google_places_text_search(
 
         try:
 
-            latitude = float(selected_location["lat"])
-            longitude = float(selected_location["lon"])
+            latitude = float(
+                selected_location["lat"]
+            )
 
-        except (KeyError, TypeError, ValueError):
+            longitude = float(
+                selected_location["lon"]
+            )
+
+        except (
+            KeyError,
+            TypeError,
+            ValueError
+        ):
 
             logger.warning(
-                "Invalid coordinates returned by Nominatim."
+                "Geocoding returned invalid coordinates."
             )
 
             return EMPTY_RESULT
 
-        logger.info(
-            "Geocoded location successfully: %s, %s",
-            latitude,
-            longitude
-        )
-
     else:
 
         try:
+
             latitude = float(latitude)
             longitude = float(longitude)
 
         except (TypeError, ValueError):
 
-            raise ValueError("Invalid location coordinates.")
+            raise ValueError(
+                "Invalid location coordinates."
+            )
 
     # -----------------------------------------------------
     # 3. VALIDATE COORDINATES
     # -----------------------------------------------------
 
-    if not (-90 <= latitude <= 90):
-        raise ValueError("Invalid latitude.")
+    if not valid_coordinates(latitude, longitude):
 
-    if not (-180 <= longitude <= 180):
-        raise ValueError("Invalid longitude.")
+        raise ValueError(
+            "Invalid latitude or longitude."
+        )
+
+    logger.info(
+        "Tourist search center: %s, %s | Radius: %s km",
+        latitude,
+        longitude,
+        radius_km
+    )
 
     # -----------------------------------------------------
     # 4. BUILD OVERPASS QUERY
     # -----------------------------------------------------
 
     overpass_query = f"""
-    [out:json][timeout:15];
+    [out:json][timeout:12];
 
     (
       nwr(around:{radius_meters},{latitude},{longitude})["tourism"];
@@ -1356,19 +1449,24 @@ def google_places_text_search(
     out center tags;
     """
 
+    # -----------------------------------------------------
+    # 5. TRY MULTIPLE OVERPASS SERVERS
+    # -----------------------------------------------------
+
     osm_data = None
     last_error = None
 
-    # -----------------------------------------------------
-    # 5. TRY OVERPASS SERVERS WITH SHORT TIMEOUTS
-    # -----------------------------------------------------
-
-    for overpass_url in OVERPASS_URLS:
+    for server_number, overpass_url in enumerate(
+        OVERPASS_URLS,
+        start=1
+    ):
 
         try:
 
             logger.info(
-                "Trying Overpass server: %s",
+                "Trying Overpass server %s/%s: %s",
+                server_number,
+                len(OVERPASS_URLS),
                 overpass_url
             )
 
@@ -1377,27 +1475,35 @@ def google_places_text_search(
                 data={
                     "data": overpass_query
                 },
-                headers=headers,
-                timeout=(2, 4)
+                headers=HEADERS,
+                timeout=(2, 8)
             )
 
             response.raise_for_status()
 
-            osm_data = response.json()
+            candidate_data = response.json()
 
-            if not isinstance(osm_data, dict):
+            if not isinstance(candidate_data, dict):
+
                 raise ValueError(
-                    "Invalid Overpass response format."
+                    "Invalid Overpass response."
                 )
 
-            if "elements" not in osm_data:
+            if not isinstance(
+                candidate_data.get("elements"),
+                list
+            ):
+
                 raise ValueError(
-                    "Overpass response has no elements."
+                    "Overpass response has no valid elements."
                 )
+
+            osm_data = candidate_data
 
             logger.info(
-                "Overpass request successful: %s",
-                overpass_url
+                "Overpass server succeeded: %s | Elements: %s",
+                overpass_url,
+                len(osm_data["elements"])
             )
 
             break
@@ -1410,7 +1516,8 @@ def google_places_text_search(
             last_error = error
 
             logger.warning(
-                "Overpass server failed: %s | %s",
+                "Overpass server %s failed: %s | %s",
+                server_number,
                 overpass_url,
                 error
             )
@@ -1418,7 +1525,7 @@ def google_places_text_search(
             continue
 
     # -----------------------------------------------------
-    # 6. HANDLE ALL SERVER FAILURES SAFELY
+    # 6. HANDLE ALL OVERPASS FAILURES
     # -----------------------------------------------------
 
     if osm_data is None:
@@ -1428,27 +1535,27 @@ def google_places_text_search(
             last_error
         )
 
-        # Do not crash the complete Flask route.
         return EMPTY_RESULT
 
     # -----------------------------------------------------
-    # 7. NORMALIZE OSM RESULTS
+    # 7. EXTRACT AND NORMALIZE PLACES
     # -----------------------------------------------------
 
     elements = osm_data.get("elements", [])
 
-    places = []
-
-    # Remove repeated names, ignoring case and extra spaces.
-    seen_place_names = set()
+    candidates = []
 
     for element in elements:
+
+        if not isinstance(element, dict):
+            continue
 
         tags = element.get("tags", {})
 
         if not isinstance(tags, dict):
             continue
 
+        # Get best available place name.
         place_name = (
             tags.get("name:en")
             or tags.get("name")
@@ -1464,16 +1571,6 @@ def google_places_text_search(
         if not place_name:
             continue
 
-        # Normalize name for duplicate detection.
-        normalized_name = re.sub(
-            r"\s+",
-            " ",
-            place_name.casefold()
-        ).strip()
-
-        if normalized_name in seen_place_names:
-            continue
-
         # -------------------------------------------------
         # GET PLACE COORDINATES
         # -------------------------------------------------
@@ -1487,34 +1584,25 @@ def google_places_text_search(
 
         else:
 
-            center = element.get("center", {})
+            center = element.get("center") or {}
 
             place_latitude = center.get("lat")
             place_longitude = center.get("lon")
 
-        if (
-            place_latitude is None
-            or place_longitude is None
+        if not valid_coordinates(
+            place_latitude,
+            place_longitude
         ):
-            continue
-
-        try:
-
-            place_latitude = float(place_latitude)
-            place_longitude = float(place_longitude)
-
-        except (TypeError, ValueError):
 
             continue
 
-        if not (
-            -90 <= place_latitude <= 90
-            and -180 <= place_longitude <= 180
-        ):
-            continue
+        place_latitude = float(place_latitude)
+        place_longitude = float(place_longitude)
 
-        # Mark name as seen only after validating coordinates.
-        seen_place_names.add(normalized_name)
+        element_id = element.get("id")
+
+        if element_id is None:
+            continue
 
         # -------------------------------------------------
         # PLACE CATEGORY
@@ -1535,21 +1623,23 @@ def google_places_text_search(
         # FORMATTED ADDRESS
         # -------------------------------------------------
 
+        address_parts = [
+            tags.get("addr:housenumber"),
+            tags.get("addr:street"),
+            tags.get("addr:suburb"),
+            (
+                tags.get("addr:city")
+                or tags.get("addr:town")
+                or tags.get("addr:village")
+            ),
+            tags.get("addr:district"),
+            tags.get("addr:state"),
+            tags.get("addr:country")
+        ]
+
         formatted_address = ", ".join(
             str(part)
-            for part in [
-                tags.get("addr:housenumber"),
-                tags.get("addr:street"),
-                tags.get("addr:suburb"),
-                (
-                    tags.get("addr:city")
-                    or tags.get("addr:town")
-                    or tags.get("addr:village")
-                ),
-                tags.get("addr:district"),
-                tags.get("addr:state"),
-                tags.get("addr:country")
-            ]
+            for part in address_parts
             if part
         )
 
@@ -1574,7 +1664,7 @@ def google_places_text_search(
 
         osm_url = (
             "https://www.openstreetmap.org/"
-            f"{element_type}/{element['id']}"
+            f"{element_type}/{element_id}"
         )
 
         # -------------------------------------------------
@@ -1583,6 +1673,7 @@ def google_places_text_search(
 
         tourism_value = tags.get("tourism", "")
         historic_value = tags.get("historic", "")
+        natural_value = tags.get("natural", "")
 
         priority = 0
 
@@ -1592,8 +1683,11 @@ def google_places_text_search(
             "viewpoint",
             "zoo",
             "theme_park",
-            "artwork"
+            "artwork",
+            "gallery",
+            "information"
         ]:
+
             priority += 10
 
         if historic_value in [
@@ -1601,29 +1695,39 @@ def google_places_text_search(
             "fort",
             "castle",
             "archaeological_site",
-            "temple"
+            "temple",
+            "ruins",
+            "memorial"
         ]:
+
             priority += 8
 
         if tags.get("amenity") == "place_of_worship":
+
             priority += 5
 
-        if tags.get("natural") in [
+        if natural_value in [
             "waterfall",
             "beach",
             "cave_entrance",
             "peak",
-            "lake"
+            "lake",
+            "spring"
         ]:
+
             priority += 5
 
+        if tags.get("leisure") == "park":
+
+            priority += 4
+
         # -------------------------------------------------
-        # BUILD FRONTEND-COMPATIBLE PLACE OBJECT
+        # BUILD PLACE OBJECT
         # -------------------------------------------------
 
-        place_id = f"{element_type}_{element['id']}"
+        place_id = f"{element_type}_{element_id}"
 
-        places.append({
+        place = {
 
             "id": place_id,
 
@@ -1677,39 +1781,102 @@ def google_places_text_search(
 
             "source": "OpenStreetMap"
 
-        })
+        }
+
+        candidates.append(place)
 
     # -----------------------------------------------------
-    # 8. SORT BY TOURIST RELEVANCE
+    # 8. SORT BEFORE DUPLICATE FILTERING
     # -----------------------------------------------------
 
-    places.sort(
+    candidates.sort(
         key=lambda place: (
             -place["priority"],
             place["name"].casefold()
         )
     )
 
-    # Limit results.
-    places = places[:200]
+    # -----------------------------------------------------
+    # 9. REMOVE TRUE DUPLICATES
+    # -----------------------------------------------------
+
+    # Same name at different locations should be retained.
+    # Same name within approximately 150 metres is treated
+    # as a possible duplicate.
+
+    unique_places = []
+
+    seen_locations_by_name = {}
+
+    for place in candidates:
+
+        normalized_name = normalize_name(
+            place["name"]
+        )
+
+        place_lat = place["lat"]
+        place_lon = place["lon"]
+
+        previous_locations = (
+            seen_locations_by_name.get(
+                normalized_name,
+                []
+            )
+        )
+
+        duplicate = False
+
+        for previous_lat, previous_lon in previous_locations:
+
+            distance = approximate_distance_km(
+                place_lat,
+                place_lon,
+                previous_lat,
+                previous_lon
+            )
+
+            if distance <= 0.15:
+
+                duplicate = True
+                break
+
+        if duplicate:
+            continue
+
+        seen_locations_by_name.setdefault(
+            normalized_name,
+            []
+        ).append(
+            (place_lat, place_lon)
+        )
+
+        unique_places.append(place)
+
+    # -----------------------------------------------------
+    # 10. LIMIT RESULTS
+    # -----------------------------------------------------
+
+    unique_places = unique_places[:200]
 
     logger.info(
-        "OSM search completed | Places: %s | Coordinates: %s, %s | Radius: %s km",
-        len(places),
+        "Tourist places search completed | "
+        "District: %s | Places: %s | "
+        "Center: %s, %s | Radius: %s km",
+        query,
+        len(unique_places),
         latitude,
         longitude,
         radius_km
     )
 
     # -----------------------------------------------------
-    # 9. RETURN RESULTS
+    # 11. RETURN FRONTEND-COMPATIBLE RESULTS
     # -----------------------------------------------------
 
     return {
-        "places": places,
+        "places": unique_places,
         "nextPageToken": None
     }
-
 
 # =========================================================
 # 13. TOURIST PLACES SEARCH - FLASK + OPENSTREETMAP
