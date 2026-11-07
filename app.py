@@ -116,23 +116,26 @@ ROUTES_URL = (
     "https://routes.googleapis.com/directions/v2:computeRoutes"
 )
 
-# Email OTP configuration
-MAIL_ADDRESS = os.getenv("MAIL_ADDRESS")
-MAIL_APP_PASSWORD = os.getenv("MAIL_APP_PASSWORD")
-# Email OTP configuration
+# ==========================================
+# EMAIL CONFIGURATION
+# ==========================================
+
+# Gmail SMTP configuration (old configuration)
 MAIL_ADDRESS = os.getenv("MAIL_ADDRESS")
 MAIL_APP_PASSWORD = os.getenv("MAIL_APP_PASSWORD")
 
-# Resend Email API Configuration
+# Resend configuration (temporary/old)
 RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 RESEND_FROM_EMAIL = os.getenv(
     "RESEND_FROM_EMAIL",
     "onboarding@resend.dev"
 )
 
-OTP_EXPIRY_SECONDS = 300
-OTP_RESEND_SECONDS = 60
-OTP_MAX_ATTEMPTS = 5
+# Google Apps Script Email Configuration
+GOOGLE_SCRIPT_URL = os.getenv("GOOGLE_SCRIPT_URL")
+GOOGLE_SCRIPT_SECRET = os.getenv("GOOGLE_SCRIPT_SECRET")
+
+# OTP Configuration
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_SECONDS = 60
 OTP_MAX_ATTEMPTS = 5
@@ -577,26 +580,79 @@ def register():
 
 
 
+# =========================================================
+# GOOGLE APPS SCRIPT EMAIL SENDER
+# =========================================================
+
+def send_email_via_google_script(to_email, subject, text, html=None):
+
+    if not GOOGLE_SCRIPT_URL or not GOOGLE_SCRIPT_SECRET:
+        logger.error("Google Apps Script email configuration is missing.")
+        return False
+
+    payload = {
+        "api_key": GOOGLE_SCRIPT_SECRET,
+        "to": to_email,
+        "subject": subject,
+        "text": text,
+        "html": html or text
+    }
+
+    try:
+        response = requests.post(
+            GOOGLE_SCRIPT_URL,
+            json=payload,
+            timeout=30
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        if result.get("success") is True:
+            logger.info("Email sent successfully through Google Apps Script.")
+            return True
+
+        logger.error(
+            "Google Apps Script returned an error: %s",
+            result.get("message", "Unknown error")
+        )
+
+        return False
+
+    except Exception:
+        logger.exception("Google Apps Script email sending failed.")
+        return False
+
+
+# =========================================================
+# 6A. SEND EMAIL OTP
+# =========================================================
+
 @app.route("/send-otp", methods=["POST"])
 def send_otp():
 
     data = request.get_json(silent=True) or {}
+
     email = data.get("email", "").strip().lower()
 
+    # Validate email
     if not re.fullmatch(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
         return jsonify({
             "success": False,
             "message": "Please enter a valid email address."
         }), 400
 
-    # Resend configuration check
-    if not RESEND_API_KEY or not RESEND_FROM_EMAIL:
+    # Google Apps Script configuration check
+    if not GOOGLE_SCRIPT_URL or not GOOGLE_SCRIPT_SECRET:
+        logger.error("Google Apps Script configuration is missing.")
+
         return jsonify({
             "success": False,
-            "message": "Resend email configuration is missing."
+            "message": "Email service configuration is missing."
         }), 500
 
-    # Existing email check
+    # Check whether email is already registered
     existing_user = execute_query(
         "SELECT id FROM users WHERE email = %s",
         (email,),
@@ -609,10 +665,14 @@ def send_otp():
             "message": "This email is already registered. Please login."
         }), 409
 
-    # Resend cooldown
+    # OTP resend cooldown
     if session.get("otp_email") == email:
+
         last_sent = session.get("otp_sent_at", 0)
-        remaining = OTP_RESEND_SECONDS - (time.time() - last_sent)
+
+        remaining = OTP_RESEND_SECONDS - (
+            time.time() - last_sent
+        )
 
         if remaining > 0:
             return jsonify({
@@ -633,6 +693,7 @@ def send_otp():
         hashlib.sha256
     ).hexdigest()
 
+    # Plain text email
     email_text = f"""
 Hello,
 
@@ -651,31 +712,50 @@ TRAVEL INDIA TEAM
 Discover India. Explore Beyond.
 """
 
+    # HTML email
     email_html = f"""
     <div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2 style="color: #ff7417;">Welcome to TRAVEL INDIA!</h2>
+
         <p>Hello,</p>
+
         <p>Your email verification OTP is:</p>
-        <h1 style="color: #ff7417; letter-spacing: 5px;">{otp}</h1>
+
+        <h1 style="color: #ff7417; letter-spacing: 5px;">
+            {otp}
+        </h1>
+
         <p>This OTP is valid for <strong>5 minutes</strong>.</p>
+
         <p>Do not share this OTP with anyone.</p>
-        <p>Thank you,<br><strong>TRAVEL INDIA TEAM</strong></p>
+
+        <p>
+            Thank you,<br>
+            <strong>TRAVEL INDIA TEAM</strong>
+        </p>
+
         <p>Discover India. Explore Beyond.</p>
     </div>
     """
 
     try:
-        resend.api_key = RESEND_API_KEY
 
-        response = resend.Emails.send({
-            "from": RESEND_FROM_EMAIL,
-            "to": [email],
-            "subject": "Travel India - Email Verification OTP",
-            "text": email_text,
-            "html": email_html
-        })
+        # Send email through Google Apps Script
+        email_sent = send_email_via_google_script(
+            to_email=email,
+            subject="Travel India - Email Verification OTP",
+            text=email_text,
+            html=email_html
+        )
 
-        # Store OTP only after successful email API response
+        if not email_sent:
+
+            return jsonify({
+                "success": False,
+                "message": "Unable to send OTP. Please try again later."
+            }), 500
+
+        # Store OTP only after successful email sending
         session["otp_email"] = email
         session["otp_hash"] = otp_hash
         session["otp_expires"] = time.time() + OTP_EXPIRY_SECONDS
@@ -684,7 +764,7 @@ Discover India. Explore Beyond.
 
         session.pop("verified_email", None)
 
-        logger.info("OTP email sent successfully. Resend response: %s", response)
+        logger.info("Registration OTP sent successfully.")
 
         return jsonify({
             "success": True,
@@ -692,12 +772,14 @@ Discover India. Explore Beyond.
         })
 
     except Exception:
-        logger.exception("Resend OTP email sending failed")
+
+        logger.exception("Registration OTP process failed.")
 
         return jsonify({
             "success": False,
-            "message": "Unable to send OTP. Please check Resend settings."
+            "message": "Unable to send OTP. Please try again later."
         }), 500
+
 
 # =========================================================
 # 6B. VERIFY EMAIL OTP
@@ -712,6 +794,7 @@ def verify_otp():
 
     otp = data.get("otp", "").strip()
 
+    # Validate email and six-digit OTP
     if not email or not re.fullmatch(r"\d{6}", otp):
 
         return jsonify({
@@ -727,19 +810,21 @@ def verify_otp():
             "message": "Please request a new OTP."
         }), 400
 
-    # Check expiry
+    # Check OTP expiry
     if time.time() > session.get("otp_expires", 0):
 
         session.pop("otp_hash", None)
         session.pop("otp_email", None)
         session.pop("otp_expires", None)
+        session.pop("otp_sent_at", None)
+        session.pop("otp_attempts", None)
 
         return jsonify({
             "success": False,
             "message": "OTP expired. Please request a new OTP."
         }), 400
 
-    # Attempt limit
+    # Check maximum attempts
     attempts = session.get("otp_attempts", 0)
 
     if attempts >= OTP_MAX_ATTEMPTS:
@@ -747,6 +832,8 @@ def verify_otp():
         session.pop("otp_hash", None)
         session.pop("otp_email", None)
         session.pop("otp_expires", None)
+        session.pop("otp_sent_at", None)
+        session.pop("otp_attempts", None)
 
         return jsonify({
             "success": False,
@@ -762,7 +849,7 @@ def verify_otp():
 
     stored_hash = session.get("otp_hash", "")
 
-    # Compare OTP securely
+    # Secure OTP comparison
     if not stored_hash or not hmac.compare_digest(
         entered_hash,
         stored_hash
