@@ -1,6 +1,7 @@
 
 import os
 import re
+import resend
 import ssl
 import time
 import secrets
@@ -118,7 +119,20 @@ ROUTES_URL = (
 # Email OTP configuration
 MAIL_ADDRESS = os.getenv("MAIL_ADDRESS")
 MAIL_APP_PASSWORD = os.getenv("MAIL_APP_PASSWORD")
+# Email OTP configuration
+MAIL_ADDRESS = os.getenv("MAIL_ADDRESS")
+MAIL_APP_PASSWORD = os.getenv("MAIL_APP_PASSWORD")
 
+# Resend Email API Configuration
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
+RESEND_FROM_EMAIL = os.getenv(
+    "RESEND_FROM_EMAIL",
+    "onboarding@resend.dev"
+)
+
+OTP_EXPIRY_SECONDS = 300
+OTP_RESEND_SECONDS = 60
+OTP_MAX_ATTEMPTS = 5
 OTP_EXPIRY_SECONDS = 300
 OTP_RESEND_SECONDS = 60
 OTP_MAX_ATTEMPTS = 5

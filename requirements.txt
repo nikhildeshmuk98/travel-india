@@ -29,3 +29,4 @@ sqlparse==0.6.1
 urllib3==2.8.0
 Werkzeug==3.1.9
 gunicorn==23.0.0
+resend==2.52.0
