@@ -2006,14 +2006,10 @@ def tourist_places():
     def get_valid_coordinates(latitude, longitude):
 
         try:
-
             latitude = float(latitude)
             longitude = float(longitude)
 
-            if not math.isfinite(latitude):
-                return None, None
-
-            if not math.isfinite(longitude):
+            if not math.isfinite(latitude) or not math.isfinite(longitude):
                 return None, None
 
             if not (-90 <= latitude <= 90):
@@ -2028,7 +2024,7 @@ def tourist_places():
             return None, None
 
     # -----------------------------------------------------
-    # HELPER 2: DISTANCE
+    # HELPER 2: CALCULATE DISTANCE
     # -----------------------------------------------------
 
     def calculate_distance(lat1, lon1, lat2, lon2):
@@ -2054,21 +2050,24 @@ def tourist_places():
         )
 
     # -----------------------------------------------------
-    # HELPER 3: FORMAT PLACES
+    # HELPER 3: FORMAT TOURIST PLACES
     # -----------------------------------------------------
 
-    def format_places(osm_places):
+    def format_places(osm_places, district_name="", state_name=""):
 
         formatted_places = []
 
         seen_ids = set()
-
         seen_names = {}
 
         for place in osm_places or []:
 
             if not isinstance(place, dict):
                 continue
+
+            # ---------------------------------------------
+            # LOCATION
+            # ---------------------------------------------
 
             location = place.get("location") or {}
 
@@ -2095,6 +2094,10 @@ def tourist_places():
             if latitude is None or longitude is None:
                 continue
 
+            # ---------------------------------------------
+            # PLACE NAME
+            # ---------------------------------------------
+
             display_name = place.get("displayName") or {}
 
             if isinstance(display_name, dict):
@@ -2110,16 +2113,25 @@ def tourist_places():
                 continue
 
             # ---------------------------------------------
-            # DUPLICATE CHECK
+            # PLACE ID
             # ---------------------------------------------
 
             place_id = (
-                place.get("id")
-                or place.get("place_id")
+                place.get("place_id")
+                or place.get("id")
             )
 
-            if place_id and place_id in seen_ids:
+            if place_id is None:
                 continue
+
+            place_id = str(place_id)
+
+            if place_id in seen_ids:
+                continue
+
+            # ---------------------------------------------
+            # DUPLICATE NAME + DISTANCE CHECK
+            # ---------------------------------------------
 
             normalized_name = re.sub(
                 r"[^a-z0-9]+",
@@ -2147,8 +2159,7 @@ def tourist_places():
             if duplicate:
                 continue
 
-            if place_id:
-                seen_ids.add(place_id)
+            seen_ids.add(place_id)
 
             seen_names.setdefault(
                 normalized_name,
@@ -2172,22 +2183,30 @@ def tourist_places():
             category = (
                 place.get("primaryType")
                 or place.get("category")
-                or "Attraction"
+                or "Tourist Attraction"
             )
+
+            # ---------------------------------------------
+            # DESCRIPTION
+            # ---------------------------------------------
 
             description = (
                 place.get("description")
-                or f"Explore {name}, a tourist destination in India."
+                or (
+                    f"Explore {name}, a tourist destination "
+                    f"in {district_name or 'India'}."
+                )
             )
 
             # ---------------------------------------------
-            # FINAL FRONTEND OBJECT
+            # FINAL PLACE OBJECT
             # ---------------------------------------------
 
-            formatted_places.append({
+            formatted_place = {
 
                 **place,
 
+                "id": place_id,
                 "place_id": place_id,
 
                 "name": name,
@@ -2196,17 +2215,33 @@ def tourist_places():
 
                 "description": description,
 
-                "latitude": latitude,
+                "category": category,
 
+                "latitude": latitude,
                 "longitude": longitude,
 
-                "category": category,
+                "district": (
+                    place.get("district")
+                    or district_name
+                ),
+
+                "state": (
+                    place.get("state")
+                    or state_name
+                ),
 
                 "photo_name": place.get("photo_name"),
 
-                "photos": place.get("photos") or []
+                "photos": place.get("photos") or [],
 
-            })
+                "osm_url": (
+                    place.get("osm_url")
+                    or f"https://www.openstreetmap.org/{place_id}"
+                )
+
+            }
+
+            formatted_places.append(formatted_place)
 
         return formatted_places
 
@@ -2278,10 +2313,6 @@ def tourist_places():
 
         user = get_current_user()
 
-        # ---------------------------------------------
-        # VALIDATE DISTRICT
-        # ---------------------------------------------
-
         if not district_id:
 
             api_error = "Please select a district."
@@ -2295,9 +2326,9 @@ def tourist_places():
                 if district_id <= 0:
                     raise ValueError()
 
-                # -------------------------------------
-                # FETCH DISTRICT
-                # -------------------------------------
+                # -----------------------------------------
+                # FETCH DISTRICT DETAILS
+                # -----------------------------------------
 
                 district = execute_query(
                     """
@@ -2319,18 +2350,14 @@ def tourist_places():
 
                 if not district:
 
-                    api_error = (
-                        "Selected district was not found."
-                    )
+                    api_error = "Selected district was not found."
 
                 else:
 
                     district_name = district["district_name"]
-
                     state_name = district["state_name"]
 
                     state_slug = create_slug(state_name)
-
                     video_slug = state_slug
 
                     latitude, longitude = get_valid_coordinates(
@@ -2349,9 +2376,9 @@ def tourist_places():
                         state_name
                     )
 
-                    # ---------------------------------
-                    # SEARCH OSM / NEXTGIS
-                    # ---------------------------------
+                    # -------------------------------------
+                    # SEARCH OPENSTREETMAP / NEXTGIS
+                    # -------------------------------------
 
                     result = google_places_text_search(
                         query=search_query,
@@ -2367,15 +2394,12 @@ def tourist_places():
                         )
 
                     places = format_places(
-                        result.get("places", [])
+                        result.get("places", []),
+                        district_name=district_name,
+                        state_name=state_name
                     )
 
-                    # ---------------------------------
-                    # STATISTICS
-                    # ---------------------------------
-
                     top_attractions = len(places)
-
                     best_places = len(places)
 
                     if not places:
@@ -2384,7 +2408,7 @@ def tourist_places():
                             result.get("error")
                             or
                             "No tourist destinations were found. "
-                            "Try another search radius."
+                            "Please try another search."
                         )
 
                     logger.info(
@@ -2402,7 +2426,7 @@ def tourist_places():
                 api_error = get_search_error_message(error)
 
         # ---------------------------------------------
-        # RENDER PAGE
+        # RENDER TOURIST PLACES PAGE
         # ---------------------------------------------
 
         return render_template(
@@ -2458,6 +2482,9 @@ def tourist_places():
 
     state_id = None
     district_id = None
+
+    district_name = ""
+    state_name = ""
 
     latitude = None
     longitude = None
@@ -2541,6 +2568,9 @@ def tourist_places():
 
         state_id = district["state_id"]
 
+        district_name = district["district_name"]
+        state_name = district["state_name"]
+
         latitude, longitude = get_valid_coordinates(
             district.get("latitude"),
             district.get("longitude")
@@ -2548,8 +2578,7 @@ def tourist_places():
 
         search_query = (
             f"Tourist attractions in "
-            f"{district['district_name']}, "
-            f"{district['state_name']}, India"
+            f"{district_name}, {state_name}, India"
         )
 
     # =====================================================
@@ -2559,7 +2588,6 @@ def tourist_places():
     elif search_mode == "current_location":
 
         latitude = data.get("latitude")
-
         longitude = data.get("longitude")
 
         latitude, longitude = get_valid_coordinates(
@@ -2607,7 +2635,9 @@ def tourist_places():
             )
 
         places = format_places(
-            result.get("places", [])
+            result.get("places", []),
+            district_name=district_name,
+            state_name=state_name
         )
 
         next_page_token = result.get("nextPageToken")
@@ -2719,6 +2749,123 @@ def tourist_places():
             "count": 0
         }), 500
 
+
+# =========================================================
+# 14. TOURIST PLACE PROFILE PAGE
+# =========================================================
+
+@app.route("/tourist-place-profile/<place_id>")
+@login_required
+def view_tourist_profile(place_id):
+
+    import math
+
+    # ---------------------------------------------
+    # READ PLACE DETAILS
+    # ---------------------------------------------
+
+    name = request.args.get("name", "").strip()
+
+    category = request.args.get(
+        "category",
+        "Tourist Attraction"
+    ).strip()
+
+    description = request.args.get(
+        "description",
+        ""
+    ).strip()
+
+    address = request.args.get(
+        "address",
+        "Location details unavailable"
+    ).strip()
+
+    district = request.args.get(
+        "district",
+        ""
+    ).strip()
+
+    state = request.args.get(
+        "state",
+        ""
+    ).strip()
+
+    # ---------------------------------------------
+    # VALIDATE COORDINATES
+    # ---------------------------------------------
+
+    try:
+
+        latitude = float(request.args.get("latitude"))
+        longitude = float(request.args.get("longitude"))
+
+        if not math.isfinite(latitude):
+            abort(400)
+
+        if not math.isfinite(longitude):
+            abort(400)
+
+        if not (-90 <= latitude <= 90):
+            abort(400)
+
+        if not (-180 <= longitude <= 180):
+            abort(400)
+
+    except (TypeError, ValueError):
+
+        abort(400)
+
+    # ---------------------------------------------
+    # VALIDATE PLACE DETAILS
+    # ---------------------------------------------
+
+    if not name or not place_id:
+
+        abort(404)
+
+    # ---------------------------------------------
+    # CREATE PLACE OBJECT
+    # ---------------------------------------------
+
+    place = {
+
+        "place_id": str(place_id),
+
+        "name": name,
+
+        "category": category,
+
+        "description": (
+            description
+            or f"Explore {name}, a tourist destination in India."
+        ),
+
+        "address": address,
+
+        "district": district,
+
+        "state": state,
+
+        "latitude": latitude,
+
+        "longitude": longitude,
+
+        "osm_url": (
+            f"https://www.openstreetmap.org/{place_id}"
+        )
+
+    }
+
+    # ---------------------------------------------
+    # RENDER PROFILE PAGE
+    # ---------------------------------------------
+
+    return render_template(
+        "viewtouristprofile.html",
+        place=place,
+        user=get_current_user()
+    )
 
 # =========================================================
 # 14. LOAD MORE PLACES - OPENSTREETMAP
