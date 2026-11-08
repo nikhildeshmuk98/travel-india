@@ -1150,7 +1150,7 @@ def get_districts(state_id):
 
 
 # =========================================================
-# 12. OPENSTREETMAP TOURIST PLACES SEARCH
+# 12. OPENSTREETMAP + NEXTGIS TOURIST PLACES SEARCH
 # =========================================================
 
 def google_places_text_search(
@@ -1161,32 +1161,35 @@ def google_places_text_search(
     page_token=None
 ):
     """
-    Tourist discovery using Nominatim + Overpass API.
+    Free tourist destination discovery using:
+    - NextGIS personal Overpass endpoint
+    - OpenStreetMap data
+    - Nominatim geocoding fallback
+    - Tourist-category validation
+    - Locality and generic-name filtering
+    - Duplicate detection using name + distance
+    - Frontend-compatible response structure
 
-    Features:
-    - Multiple Overpass fallback servers
-    - Improved network timeouts
-    - Coordinate validation
-    - Tourist category prioritization
-    - Accurate duplicate detection using name + distance
-    - Frontend-compatible response
-    - Clear API failure information
+    Required environment variable:
+        NEXTGIS_OVERPASS_URL
     """
 
+    import os
     import re
     import math
     import requests
 
-    OVERPASS_URLS = [
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.kumi.systems/api/interpreter",
-        "https://overpass.private.coffee/api/interpreter",
-    ]
+    NOMINATIM_URL = (
+        "https://nominatim.openstreetmap.org/search"
+    )
 
-    NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
+    OVERPASS_URL = os.getenv(
+        "NEXTGIS_OVERPASS_URL",
+        ""
+    ).strip()
 
     HEADERS = {
-        "User-Agent": "TravelIndiaTourismApp/1.0 (tourism discovery)",
+        "User-Agent": "TravelIndiaTourismApp/1.0",
         "Accept": "application/json"
     }
 
@@ -1197,7 +1200,7 @@ def google_places_text_search(
     }
 
     # -----------------------------------------------------
-    # HELPER 1: VALIDATE COORDINATES
+    # HELPER 1: COORDINATE VALIDATION
     # -----------------------------------------------------
 
     def valid_coordinates(lat, lon):
@@ -1217,27 +1220,35 @@ def google_places_text_search(
             return False
 
     # -----------------------------------------------------
-    # HELPER 2: NORMALIZE NAME
+    # HELPER 2: NAME NORMALIZATION
     # -----------------------------------------------------
 
     def normalize_name(name):
 
         name = str(name or "").casefold().strip()
 
-        name = re.sub(r"[^a-z0-9]+", " ", name)
+        name = re.sub(
+            r"[^a-z0-9]+",
+            " ",
+            name
+        )
 
-        return re.sub(r"\s+", " ", name).strip()
+        return re.sub(
+            r"\s+",
+            " ",
+            name
+        ).strip()
 
     # -----------------------------------------------------
-    # HELPER 3: DISTANCE BETWEEN TWO LOCATIONS
+    # HELPER 3: DISTANCE CALCULATION
     # -----------------------------------------------------
 
     def distance_km(lat1, lon1, lat2, lon2):
 
-        lat1 = math.radians(lat1)
-        lon1 = math.radians(lon1)
-        lat2 = math.radians(lat2)
-        lon2 = math.radians(lon2)
+        lat1 = math.radians(float(lat1))
+        lon1 = math.radians(float(lon1))
+        lat2 = math.radians(float(lat2))
+        lon2 = math.radians(float(lon2))
 
         dlat = lat2 - lat1
         dlon = lon2 - lon1
@@ -1251,11 +1262,171 @@ def google_places_text_search(
 
         return 6371 * 2 * math.atan2(
             math.sqrt(a),
-            math.sqrt(1 - a)
+            math.sqrt(max(0, 1 - a))
         )
 
     # -----------------------------------------------------
-    # 1. VALIDATE RADIUS
+    # HELPER 4: GENERIC NAME FILTER
+    # -----------------------------------------------------
+
+    GENERIC_NAMES = {
+        "temple",
+        "shrine",
+        "mosque",
+        "church",
+        "pool",
+        "waterfall",
+        "waterfalls",
+        "park",
+        "garden",
+        "monument",
+        "memorial",
+        "attraction",
+        "tourist attraction",
+        "unknown",
+        "unnamed",
+        "place of worship",
+        "community park",
+        "vip",
+        "locality"
+    }
+
+    LOCALITY_PATTERN = re.compile(
+        r"\b("
+        r"colony|"
+        r"bc colony|"
+        r"sc colony|"
+        r"st colony|"
+        r"peta|"
+        r"peta colony|"
+        r"nagar colony|"
+        r"residential colony"
+        r")\b",
+        re.IGNORECASE
+    )
+
+    def is_generic_or_locality_name(name):
+
+        normalized = normalize_name(name)
+
+        if not normalized:
+            return True
+
+        if normalized in GENERIC_NAMES:
+            return True
+
+        # Reject locality/colony names.
+        if LOCALITY_PATTERN.search(normalized):
+            return True
+
+        return False
+
+    # -----------------------------------------------------
+    # HELPER 5: VALID TOURIST TAGS
+    # -----------------------------------------------------
+
+    def get_tourist_category(tags):
+
+        tourism = str(tags.get("tourism", "")).lower()
+        historic = str(tags.get("historic", "")).lower()
+        natural = str(tags.get("natural", "")).lower()
+        leisure = str(tags.get("leisure", "")).lower()
+        amenity = str(tags.get("amenity", "")).lower()
+        waterway = str(tags.get("waterway", "")).lower()
+        man_made = str(tags.get("man_made", "")).lower()
+        landuse = str(tags.get("landuse", "")).lower()
+
+        # Worship places: classify by religion/building type.
+        if amenity == "place_of_worship":
+
+            religion = str(
+                tags.get("religion", "")
+            ).lower()
+
+            if religion == "muslim":
+                return "Mosque", 8
+
+            if religion == "christian":
+                return "Church", 8
+
+            if religion == "hindu":
+                return "Temple", 8
+
+            if religion == "sikh":
+                return "Gurudwara", 8
+
+            if religion == "buddhist":
+                return "Buddhist Monastery", 8
+
+            return "Place of Worship", 7
+
+        # Main tourist attractions.
+        tourism_categories = {
+            "attraction": ("Attraction", 10),
+            "museum": ("Museum", 10),
+            "viewpoint": ("Viewpoint", 9),
+            "zoo": ("Zoo", 9),
+            "theme_park": ("Theme Park", 10),
+            "artwork": ("Artwork", 7),
+            "gallery": ("Art Gallery", 8),
+            "aquarium": ("Aquarium", 9)
+        }
+
+        if tourism in tourism_categories:
+            return tourism_categories[tourism]
+
+        # Historic destinations.
+        historic_categories = {
+            "fort": ("Fort", 10),
+            "castle": ("Castle", 10),
+            "monument": ("Monument", 9),
+            "archaeological_site": ("Historical Site", 9),
+            "ruins": ("Historical Ruins", 8),
+            "memorial": ("Memorial", 8),
+            "city_gate": ("Historical Gate", 8),
+            "manor": ("Historical Building", 7)
+        }
+
+        if historic in historic_categories:
+            return historic_categories[historic]
+
+        # Natural destinations.
+        natural_categories = {
+            "waterfall": ("Waterfall", 10),
+            "beach": ("Beach", 10),
+            "cave_entrance": ("Cave", 9),
+            "peak": ("Mountain / Peak", 7),
+            "spring": ("Natural Spring", 7),
+            "lake": ("Lake", 8),
+            "wood": ("Forest", 7)
+        }
+
+        if natural in natural_categories:
+            return natural_categories[natural]
+
+        if waterway == "waterfall":
+            return "Waterfall", 10
+
+        # Parks and gardens.
+        leisure_categories = {
+            "park": ("Park", 7),
+            "nature_reserve": ("Nature Reserve", 9),
+            "garden": ("Garden", 7)
+        }
+
+        if leisure in leisure_categories:
+            return leisure_categories[leisure]
+
+        if man_made == "monument":
+            return "Monument", 8
+
+        if landuse == "recreation_ground":
+            return "Recreation Ground", 5
+
+        return None, 0
+
+    # -----------------------------------------------------
+    # HELPER 6: DISTRICT / LOCATION GEOCODING
     # -----------------------------------------------------
 
     try:
@@ -1267,10 +1438,6 @@ def google_places_text_search(
         raise ValueError("Invalid search radius.")
 
     radius_meters = radius_km * 1000
-
-    # -----------------------------------------------------
-    # 2. GEOCODE LOCATION IF COORDINATES ARE NOT PROVIDED
-    # -----------------------------------------------------
 
     if latitude is None or longitude is None:
 
@@ -1284,15 +1451,13 @@ def google_places_text_search(
         ).strip()
 
         if not location_query:
-            raise ValueError("Location name is missing.")
+            return {
+                **EMPTY_RESULT,
+                "error": "Location name is missing."
+            }
 
-        if "india" not in location_query.lower():
+        if "india" not in location_query.casefold():
             location_query += ", India"
-
-        logger.info(
-            "Geocoding tourist location: %s",
-            location_query
-        )
 
         try:
 
@@ -1306,7 +1471,7 @@ def google_places_text_search(
                     "addressdetails": 1
                 },
                 headers=HEADERS,
-                timeout=(5, 12)
+                timeout=(5, 15)
             )
 
             geocode_response.raise_for_status()
@@ -1322,22 +1487,28 @@ def google_places_text_search(
             if not geocode_results:
                 return {
                     **EMPTY_RESULT,
-                    "error": "Location could not be found."
+                    "error": "Selected location could not be found."
                 }
 
             selected_location = geocode_results[0]
 
             for item in geocode_results:
 
-                item_type = (
+                address_type = (
                     str(item.get("type", "")).lower()
                     + " "
                     + str(item.get("class", "")).lower()
+                    + " "
+                    + str(item.get("addresstype", "")).lower()
                 )
 
                 if any(
-                    word in item_type
-                    for word in ["administrative", "district", "county"]
+                    word in address_type
+                    for word in [
+                        "administrative",
+                        "district",
+                        "county"
+                    ]
                 ):
                     selected_location = item
                     break
@@ -1345,7 +1516,16 @@ def google_places_text_search(
             latitude = float(selected_location["lat"])
             longitude = float(selected_location["lon"])
 
-        except (requests.RequestException, ValueError, KeyError) as error:
+        except requests.Timeout:
+
+            logger.exception("Nominatim geocoding timed out.")
+
+            return {
+                **EMPTY_RESULT,
+                "error": "Location search timed out. Please try again."
+            }
+
+        except (requests.RequestException, ValueError, KeyError):
 
             logger.exception("Nominatim geocoding failed.")
 
@@ -1366,119 +1546,146 @@ def google_places_text_search(
     if not valid_coordinates(latitude, longitude):
         raise ValueError("Invalid latitude or longitude.")
 
-    logger.info(
-        "Tourist search center: %s, %s | Radius: %s km",
-        latitude,
-        longitude,
-        radius_km
-    )
+    # -----------------------------------------------------
+    # 7. CHECK NEXTGIS CONFIGURATION
+    # -----------------------------------------------------
+
+    if not OVERPASS_URL:
+
+        logger.error(
+            "NEXTGIS_OVERPASS_URL is not configured."
+        )
+
+        return {
+            **EMPTY_RESULT,
+            "error": (
+                "Tourist places service is not configured. "
+                "Please contact the administrator."
+            )
+        }
 
     # -----------------------------------------------------
-    # 3. BUILD OVERPASS QUERY
+    # 8. BUILD OVERPASS QUERY
     # -----------------------------------------------------
 
     overpass_query = f"""
-    [out:json][timeout:20];
+    [out:json][timeout:25];
 
     (
-      nwr(around:{radius_meters},{latitude},{longitude})["tourism"~"attraction|museum|viewpoint|zoo|theme_park|artwork|gallery|aquarium|hotel|camp_site"];
-      nwr(around:{radius_meters},{latitude},{longitude})["historic"];
-      nwr(around:{radius_meters},{latitude},{longitude})["leisure"~"park|nature_reserve|garden"];
-      nwr(around:{radius_meters},{latitude},{longitude})["natural"~"waterfall|beach|cave_entrance|peak|spring|lake|wood"];
-      nwr(around:{radius_meters},{latitude},{longitude})["amenity"="place_of_worship"];
-      nwr(around:{radius_meters},{latitude},{longitude})["waterway"="waterfall"];
-      nwr(around:{radius_meters},{latitude},{longitude})["man_made"="monument"];
-      nwr(around:{radius_meters},{latitude},{longitude})["landuse"="recreation_ground"];
+      nwr["tourism"~"attraction|museum|viewpoint|zoo|theme_park|artwork|gallery|aquarium"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["historic"~"fort|castle|monument|archaeological_site|ruins|memorial|city_gate|manor"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["leisure"~"park|nature_reserve|garden"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["natural"~"waterfall|beach|cave_entrance|peak|spring|lake|wood"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["amenity"="place_of_worship"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["waterway"="waterfall"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["man_made"="monument"]
+         (around:{radius_meters},{latitude},{longitude});
+
+      nwr["landuse"="recreation_ground"]
+         (around:{radius_meters},{latitude},{longitude});
     );
 
     out center tags;
     """
 
     # -----------------------------------------------------
-    # 4. TRY OVERPASS SERVERS
+    # 9. FETCH FROM NEXTGIS
     # -----------------------------------------------------
 
-    osm_data = None
-    last_error = None
+    try:
 
-    for server_number, server_url in enumerate(
-        OVERPASS_URLS,
-        start=1
-    ):
-
-        try:
-
-            logger.info(
-                "Trying Overpass server %s/%s",
-                server_number,
-                len(OVERPASS_URLS)
-            )
-
-            response = requests.post(
-                server_url,
-                data={"data": overpass_query},
-                headers=HEADERS,
-                timeout=(5, 20)
-            )
-
-            response.raise_for_status()
-
-            candidate = response.json()
-
-            if not isinstance(candidate, dict):
-                raise ValueError("Invalid Overpass response.")
-
-            elements = candidate.get("elements")
-
-            if not isinstance(elements, list):
-                raise ValueError("Overpass elements are missing.")
-
-            osm_data = candidate
-
-            logger.info(
-                "Overpass succeeded: %s | Elements: %s",
-                server_url,
-                len(elements)
-            )
-
-            break
-
-        except (
-            requests.RequestException,
-            ValueError
-        ) as error:
-
-            last_error = error
-
-            logger.warning(
-                "Overpass server %s failed: %s",
-                server_url,
-                error
-            )
-
-    # -----------------------------------------------------
-    # 5. HANDLE SERVER FAILURE
-    # -----------------------------------------------------
-
-    if osm_data is None:
-
-        logger.error(
-            "All Overpass servers failed: %s",
-            last_error
+        logger.info(
+            "Searching tourist destinations | "
+            "Latitude: %s | Longitude: %s | Radius: %s km",
+            latitude,
+            longitude,
+            radius_km
         )
+
+        response = requests.post(
+            OVERPASS_URL,
+            data={
+                "data": overpass_query
+            },
+            headers=HEADERS,
+            timeout=(10, 45)
+        )
+
+        response.raise_for_status()
+
+        osm_data = response.json()
+
+        if not isinstance(osm_data, dict):
+
+            raise ValueError(
+                "Invalid NextGIS response format."
+            )
+
+        elements = osm_data.get("elements")
+
+        if not isinstance(elements, list):
+
+            raise ValueError(
+                "NextGIS response does not contain valid elements."
+            )
+
+        logger.info(
+            "NextGIS returned %s raw records.",
+            len(elements)
+        )
+
+    except requests.Timeout:
+
+        logger.exception("NextGIS request timed out.")
 
         return {
             **EMPTY_RESULT,
-            "error": "All OpenStreetMap servers are currently unavailable."
+            "error": (
+                "Tourist places search is taking too long. "
+                "Please try again."
+            )
+        }
+
+    except requests.RequestException:
+
+        logger.exception("NextGIS connection failed.")
+
+        return {
+            **EMPTY_RESULT,
+            "error": (
+                "Unable to connect to the free tourist places service. "
+                "Please try again later."
+            )
+        }
+
+    except ValueError:
+
+        logger.exception("NextGIS returned invalid data.")
+
+        return {
+            **EMPTY_RESULT,
+            "error": "Tourist places service returned invalid data."
         }
 
     # -----------------------------------------------------
-    # 6. EXTRACT PLACES
+    # 10. EXTRACT AND VALIDATE DESTINATIONS
     # -----------------------------------------------------
 
     candidates = []
 
-    for element in osm_data.get("elements", []):
+    for element in elements:
 
         if not isinstance(element, dict):
             continue
@@ -1500,7 +1707,31 @@ def google_places_text_search(
 
         name = str(name).strip()
 
-        if not name:
+        if is_generic_or_locality_name(name):
+            continue
+
+        # Reject actual locality objects, not every use
+        # of the OSM "place" tag.
+        place_type = str(
+            tags.get("place", "")
+        ).lower()
+
+        if place_type in {
+            "city",
+            "town",
+            "village",
+            "hamlet",
+            "suburb",
+            "neighbourhood",
+            "locality",
+            "quarter",
+            "isolated_dwelling"
+        }:
+            continue
+
+        category, priority = get_tourist_category(tags)
+
+        if not category:
             continue
 
         element_type = element.get("type")
@@ -1529,21 +1760,6 @@ def google_places_text_search(
             continue
 
         # ---------------------------------------------
-        # CATEGORY
-        # ---------------------------------------------
-
-        category = (
-            tags.get("tourism")
-            or tags.get("historic")
-            or tags.get("leisure")
-            or tags.get("natural")
-            or tags.get("amenity")
-            or tags.get("waterway")
-            or tags.get("man_made")
-            or "tourist_attraction"
-        )
-
-        # ---------------------------------------------
         # ADDRESS
         # ---------------------------------------------
 
@@ -1568,38 +1784,33 @@ def google_places_text_search(
             address = str(query or "India").strip()
 
         # ---------------------------------------------
-        # PRIORITY
+        # RELIGION / PLACE DETAILS
         # ---------------------------------------------
 
-        priority = 0
+        religion = str(
+            tags.get("religion", "")
+        ).strip()
 
-        tourism = tags.get("tourism", "")
-        historic = tags.get("historic", "")
-        natural = tags.get("natural", "")
+        denomination = str(
+            tags.get("denomination", "")
+        ).strip()
 
-        if tourism in [
-            "attraction", "museum", "viewpoint", "zoo",
-            "theme_park", "artwork", "gallery", "aquarium"
-        ]:
-            priority += 10
+        description_parts = []
 
-        if historic in [
-            "monument", "fort", "castle",
-            "archaeological_site", "ruins", "memorial"
-        ]:
-            priority += 8
+        if category:
+            description_parts.append(category)
 
-        if tags.get("amenity") == "place_of_worship":
-            priority += 5
+        if religion:
+            description_parts.append(religion.title())
 
-        if natural in [
-            "waterfall", "beach", "cave_entrance",
-            "peak", "lake", "spring"
-        ]:
-            priority += 5
+        if denomination:
+            description_parts.append(denomination.title())
 
-        if tags.get("leisure") in ["park", "nature_reserve", "garden"]:
-            priority += 4
+        description = (
+            f"{name} is a "
+            + " ".join(description_parts)
+            + " destination."
+        )
 
         # ---------------------------------------------
         # MAP URLS
@@ -1626,7 +1837,9 @@ def google_places_text_search(
 
             "name": name,
 
-            "displayName": {"text": name},
+            "displayName": {
+                "text": name
+            },
 
             "formattedAddress": address,
 
@@ -1639,18 +1852,27 @@ def google_places_text_search(
             "lon": place_lon,
 
             "primaryType": category,
+
             "types": [category],
+
             "category": category,
 
             "priority": priority,
 
+            "description": description,
+
+            "religion": religion or None,
+
+            "denomination": denomination or None,
+
             "rating": None,
+
             "userRatingCount": 0,
 
-            # OSM does not automatically provide photos.
             "photos": [],
 
             "googleMapsUri": map_url,
+
             "osm_url": osm_url,
 
             "websiteUri": (
@@ -1671,13 +1893,17 @@ def google_places_text_search(
                 )
             },
 
-            "source": "OpenStreetMap"
+            "source": "OpenStreetMap",
+
+            "osm_element_type": element_type,
+
+            "osm_element_id": element_id
         }
 
         candidates.append(place)
 
     # -----------------------------------------------------
-    # 7. SORT BY TOURIST IMPORTANCE
+    # 11. SORT BY TOURIST IMPORTANCE
     # -----------------------------------------------------
 
     candidates.sort(
@@ -1688,11 +1914,13 @@ def google_places_text_search(
     )
 
     # -----------------------------------------------------
-    # 8. REMOVE ONLY REAL DUPLICATES
+    # 12. REMOVE DUPLICATE DESTINATIONS
     # -----------------------------------------------------
 
     unique_places = []
+
     seen_ids = set()
+
     seen_names = {}
 
     for place in candidates:
@@ -1702,17 +1930,25 @@ def google_places_text_search(
         if place_id in seen_ids:
             continue
 
-        normalized = normalize_name(place["name"])
+        normalized = normalize_name(
+            place["name"]
+        )
 
-        lat = place["lat"]
-        lon = place["lon"]
+        place_lat = place["lat"]
+        place_lon = place["lon"]
 
         duplicate = False
 
-        for old_lat, old_lon in seen_names.get(normalized, []):
+        for old_lat, old_lon in seen_names.get(
+            normalized,
+            []
+        ):
 
             if distance_km(
-                lat, lon, old_lat, old_lon
+                place_lat,
+                place_lon,
+                old_lat,
+                old_lon
             ) <= 0.15:
 
                 duplicate = True
@@ -1723,19 +1959,24 @@ def google_places_text_search(
 
         seen_ids.add(place_id)
 
-        seen_names.setdefault(normalized, []).append((lat, lon))
+        seen_names.setdefault(
+            normalized,
+            []
+        ).append((place_lat, place_lon))
 
         unique_places.append(place)
 
     # -----------------------------------------------------
-    # 9. LIMIT RESULTS
+    # 13. LIMIT RESULTS
     # -----------------------------------------------------
 
     unique_places = unique_places[:200]
 
     logger.info(
-        "Tourist search completed | Query: %s | Count: %s",
-        query,
+        "Tourist search completed | "
+        "Raw: %s | Valid: %s | Final: %s",
+        len(elements),
+        len(candidates),
         len(unique_places)
     )
 
@@ -1744,6 +1985,7 @@ def google_places_text_search(
         "nextPageToken": None,
         "error": None
     }
+
 
 # =========================================================
 # 13. TOURIST PLACES SEARCH - FLASK + OPENSTREETMAP
@@ -1755,6 +1997,7 @@ def tourist_places():
 
     import re
     import math
+    import requests
 
     # -----------------------------------------------------
     # HELPER 1: VALIDATE COORDINATES
@@ -1767,7 +2010,10 @@ def tourist_places():
             latitude = float(latitude)
             longitude = float(longitude)
 
-            if not math.isfinite(latitude) or not math.isfinite(longitude):
+            if not math.isfinite(latitude):
+                return None, None
+
+            if not math.isfinite(longitude):
                 return None, None
 
             if not (-90 <= latitude <= 90):
@@ -1804,7 +2050,7 @@ def tourist_places():
 
         return 6371 * 2 * math.atan2(
             math.sqrt(a),
-            math.sqrt(1 - a)
+            math.sqrt(max(0, 1 - a))
         )
 
     # -----------------------------------------------------
@@ -1816,6 +2062,7 @@ def tourist_places():
         formatted_places = []
 
         seen_ids = set()
+
         seen_names = {}
 
         for place in osm_places or []:
@@ -1853,13 +2100,11 @@ def tourist_places():
             if isinstance(display_name, dict):
                 display_name = display_name.get("text", "")
 
-            name = (
+            name = str(
                 place.get("name")
                 or display_name
                 or ""
-            )
-
-            name = str(name).strip()
+            ).strip()
 
             if not name:
                 continue
@@ -1877,7 +2122,7 @@ def tourist_places():
                 continue
 
             normalized_name = re.sub(
-                r"\s+",
+                r"[^a-z0-9]+",
                 " ",
                 name.casefold()
             ).strip()
@@ -1911,7 +2156,7 @@ def tourist_places():
             ).append((latitude, longitude))
 
             # ---------------------------------------------
-            # OTHER DETAILS
+            # ADDRESS
             # ---------------------------------------------
 
             address = (
@@ -1920,10 +2165,14 @@ def tourist_places():
                 or "Location details unavailable"
             )
 
+            # ---------------------------------------------
+            # CATEGORY
+            # ---------------------------------------------
+
             category = (
                 place.get("primaryType")
                 or place.get("category")
-                or "tourist_attraction"
+                or "Attraction"
             )
 
             description = (
@@ -1969,12 +2218,16 @@ def tourist_places():
 
         value = str(value or "").strip().lower()
 
-        value = re.sub(r"[^a-z0-9]+", "-", value)
+        value = re.sub(
+            r"[^a-z0-9]+",
+            "-",
+            value
+        )
 
         return value.strip("-")
 
     # -----------------------------------------------------
-    # HELPER 5: SEARCH ERROR
+    # HELPER 5: SEARCH ERROR MESSAGE
     # -----------------------------------------------------
 
     def get_search_error_message(error):
@@ -2066,14 +2319,18 @@ def tourist_places():
 
                 if not district:
 
-                    api_error = "Selected district was not found."
+                    api_error = (
+                        "Selected district was not found."
+                    )
 
                 else:
 
                     district_name = district["district_name"]
+
                     state_name = district["state_name"]
 
                     state_slug = create_slug(state_name)
+
                     video_slug = state_slug
 
                     latitude, longitude = get_valid_coordinates(
@@ -2093,7 +2350,7 @@ def tourist_places():
                     )
 
                     # ---------------------------------
-                    # SEARCH OSM
+                    # SEARCH OSM / NEXTGIS
                     # ---------------------------------
 
                     result = google_places_text_search(
@@ -2118,6 +2375,7 @@ def tourist_places():
                     # ---------------------------------
 
                     top_attractions = len(places)
+
                     best_places = len(places)
 
                     if not places:
@@ -2176,20 +2434,26 @@ def tourist_places():
 
     try:
 
-        radius_km = int(data.get("radius_km", 25))
+        radius_km = int(
+            data.get("radius_km", 25)
+        )
 
     except (ValueError, TypeError):
 
         return jsonify({
             "success": False,
-            "message": "Please select a valid radius."
+            "message": "Please select a valid radius.",
+            "places": [],
+            "count": 0
         }), 400
 
     if radius_km not in [5, 10, 25, 50, 100]:
 
         return jsonify({
             "success": False,
-            "message": "Invalid search radius."
+            "message": "Invalid search radius.",
+            "places": [],
+            "count": 0
         }), 400
 
     state_id = None
@@ -2212,7 +2476,9 @@ def tourist_places():
 
             return jsonify({
                 "success": False,
-                "message": "Please select a district."
+                "message": "Please select a district.",
+                "places": [],
+                "count": 0
             }), 400
 
         try:
@@ -2226,7 +2492,9 @@ def tourist_places():
 
             return jsonify({
                 "success": False,
-                "message": "Invalid district selected."
+                "message": "Invalid district selected.",
+                "places": [],
+                "count": 0
             }), 400
 
         try:
@@ -2257,14 +2525,18 @@ def tourist_places():
 
             return jsonify({
                 "success": False,
-                "message": "Unable to load district information."
+                "message": "Unable to load district information.",
+                "places": [],
+                "count": 0
             }), 500
 
         if not district:
 
             return jsonify({
                 "success": False,
-                "message": "District not found."
+                "message": "District not found.",
+                "places": [],
+                "count": 0
             }), 404
 
         state_id = district["state_id"]
@@ -2287,6 +2559,7 @@ def tourist_places():
     elif search_mode == "current_location":
 
         latitude = data.get("latitude")
+
         longitude = data.get("longitude")
 
         latitude, longitude = get_valid_coordinates(
@@ -2298,7 +2571,9 @@ def tourist_places():
 
             return jsonify({
                 "success": False,
-                "message": "Valid current location is required."
+                "message": "Valid current location is required.",
+                "places": [],
+                "count": 0
             }), 400
 
         search_query = "Tourist attractions"
@@ -2307,7 +2582,9 @@ def tourist_places():
 
         return jsonify({
             "success": False,
-            "message": "Invalid search mode."
+            "message": "Invalid search mode.",
+            "places": [],
+            "count": 0
         }), 400
 
     # =====================================================
@@ -2373,7 +2650,7 @@ def tourist_places():
             )
 
         # ---------------------------------------------
-        # RETURN RESULTS
+        # NO DESTINATIONS FOUND
         # ---------------------------------------------
 
         if not places:
@@ -2391,11 +2668,17 @@ def tourist_places():
                 "count": 0
             }), 200
 
+        # ---------------------------------------------
+        # SUCCESS RESPONSE
+        # ---------------------------------------------
+
         return jsonify({
 
             "success": True,
 
-            "message": "Tourist destinations loaded successfully.",
+            "message": (
+                "Tourist destinations loaded successfully."
+            ),
 
             "places": places,
 
@@ -2415,24 +2698,26 @@ def tourist_places():
 
             return jsonify({
                 "success": False,
-                "message": "Tourist places search timed out."
+                "message": "Tourist places search timed out.",
+                "places": [],
+                "count": 0
             }), 504
 
         if isinstance(error, requests.RequestException):
 
             return jsonify({
                 "success": False,
-                "message": "Unable to connect to OpenStreetMap."
+                "message": "Unable to connect to NextGIS.",
+                "places": [],
+                "count": 0
             }), 502
 
         return jsonify({
             "success": False,
-            "message": "Unable to load tourist destinations."
+            "message": "Unable to load tourist destinations.",
+            "places": [],
+            "count": 0
         }), 500
-
-# =========================================================
-# 14. LOAD MORE PLACES
-# =========================================================
 
 
 # =========================================================
