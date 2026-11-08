@@ -1150,7 +1150,7 @@ def get_districts(state_id):
 
 
 # =========================================================
-# 12. FREE OPENSTREETMAP TOURIST PLACES SEARCH
+# 12. OPENSTREETMAP TOURIST PLACES SEARCH
 # =========================================================
 
 def google_places_text_search(
@@ -1161,66 +1161,43 @@ def google_places_text_search(
     page_token=None
 ):
     """
-    Tourist place discovery using:
-    1. Nominatim geocoding
-    2. Multiple Overpass API servers
-    3. OpenStreetMap location data
+    Tourist discovery using Nominatim + Overpass API.
 
     Features:
-    - Improved network timeouts
     - Multiple Overpass fallback servers
-    - Better coordinate validation
-    - Duplicate detection using name + location
-    - Tourist relevance sorting
-    - Safe API failure handling
-    - Frontend-compatible response structure
+    - Improved network timeouts
+    - Coordinate validation
+    - Tourist category prioritization
+    - Accurate duplicate detection using name + distance
+    - Frontend-compatible response
+    - Clear API failure information
     """
 
     import re
     import math
     import requests
 
-    # -----------------------------------------------------
-    # CONFIGURATION
-    # -----------------------------------------------------
-
     OVERPASS_URLS = [
         "https://overpass-api.de/api/interpreter",
         "https://overpass.kumi.systems/api/interpreter",
-        "https://overpass.private.coffee/api/interpreter"
+        "https://overpass.private.coffee/api/interpreter",
     ]
 
-    NOMINATIM_URL = (
-        "https://nominatim.openstreetmap.org/search"
-    )
+    NOMINATIM_URL = "https://nominatim.openstreetmap.org/search"
 
     HEADERS = {
-        "User-Agent": (
-            "TravelIndiaTourismApp/1.0 "
-            "(tourism discovery application)"
-        ),
+        "User-Agent": "TravelIndiaTourismApp/1.0 (tourism discovery)",
         "Accept": "application/json"
     }
 
     EMPTY_RESULT = {
         "places": [],
-        "nextPageToken": None
+        "nextPageToken": None,
+        "error": None
     }
 
     # -----------------------------------------------------
-    # HELPER 1: NORMALIZE PLACE NAME
-    # -----------------------------------------------------
-
-    def normalize_name(name):
-
-        return re.sub(
-            r"\s+",
-            " ",
-            str(name or "").casefold()
-        ).strip()
-
-    # -----------------------------------------------------
-    # HELPER 2: CHECK VALID COORDINATES
+    # HELPER 1: VALIDATE COORDINATES
     # -----------------------------------------------------
 
     def valid_coordinates(lat, lon):
@@ -1237,71 +1214,79 @@ def google_places_text_search(
             )
 
         except (TypeError, ValueError):
-
             return False
 
     # -----------------------------------------------------
-    # HELPER 3: APPROXIMATE DISTANCE IN KM
+    # HELPER 2: NORMALIZE NAME
     # -----------------------------------------------------
 
-    def approximate_distance_km(
-        lat1,
-        lon1,
-        lat2,
-        lon2
-    ):
+    def normalize_name(name):
 
-        lat_difference = (lat1 - lat2) * 111
+        name = str(name or "").casefold().strip()
 
-        lon_difference = (
-            (lon1 - lon2)
-            * 111
-            * math.cos(math.radians(lat1))
+        name = re.sub(r"[^a-z0-9]+", " ", name)
+
+        return re.sub(r"\s+", " ", name).strip()
+
+    # -----------------------------------------------------
+    # HELPER 3: DISTANCE BETWEEN TWO LOCATIONS
+    # -----------------------------------------------------
+
+    def distance_km(lat1, lon1, lat2, lon2):
+
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(lat2)
+        lon2 = math.radians(lon2)
+
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1)
+            * math.cos(lat2)
+            * math.sin(dlon / 2) ** 2
         )
 
-        return math.sqrt(
-            lat_difference ** 2
-            + lon_difference ** 2
+        return 6371 * 2 * math.atan2(
+            math.sqrt(a),
+            math.sqrt(1 - a)
         )
 
     # -----------------------------------------------------
-    # 1. VALIDATE SEARCH RADIUS
+    # 1. VALIDATE RADIUS
     # -----------------------------------------------------
 
     try:
-
         radius_km = int(radius_km)
-
     except (TypeError, ValueError):
-
         raise ValueError("Invalid search radius.")
 
     if radius_km not in [5, 10, 25, 50, 100]:
-
         raise ValueError("Invalid search radius.")
 
     radius_meters = radius_km * 1000
 
     # -----------------------------------------------------
-    # 2. GET LOCATION COORDINATES
+    # 2. GEOCODE LOCATION IF COORDINATES ARE NOT PROVIDED
     # -----------------------------------------------------
 
     if latitude is None or longitude is None:
 
-        location_query = (
-            str(query or "")
-            .replace("Tourist attractions in", "")
-            .strip()
-        )
+        location_query = str(query or "").strip()
+
+        location_query = re.sub(
+            r"^Tourist attractions in\s+",
+            "",
+            location_query,
+            flags=re.IGNORECASE
+        ).strip()
 
         if not location_query:
-
-            raise ValueError(
-                "District name is missing."
-            )
+            raise ValueError("Location name is missing.")
 
         if "india" not in location_query.lower():
-
             location_query += ", India"
 
         logger.info(
@@ -1311,115 +1296,75 @@ def google_places_text_search(
 
         try:
 
-            with requests.Session() as session:
+            geocode_response = requests.get(
+                NOMINATIM_URL,
+                params={
+                    "q": location_query,
+                    "format": "jsonv2",
+                    "limit": 5,
+                    "countrycodes": "in",
+                    "addressdetails": 1
+                },
+                headers=HEADERS,
+                timeout=(5, 12)
+            )
 
-                geocode_response = session.get(
-                    NOMINATIM_URL,
-                    params={
-                        "q": location_query,
-                        "format": "jsonv2",
-                        "limit": 5,
-                        "countrycodes": "in",
-                        "addressdetails": 1
-                    },
-                    headers=HEADERS,
-                    timeout=(3, 5)
+            geocode_response.raise_for_status()
+
+            geocode_results = geocode_response.json()
+
+            if not isinstance(geocode_results, list):
+                return {
+                    **EMPTY_RESULT,
+                    "error": "Invalid location search response."
+                }
+
+            if not geocode_results:
+                return {
+                    **EMPTY_RESULT,
+                    "error": "Location could not be found."
+                }
+
+            selected_location = geocode_results[0]
+
+            for item in geocode_results:
+
+                item_type = (
+                    str(item.get("type", "")).lower()
+                    + " "
+                    + str(item.get("class", "")).lower()
                 )
 
-                geocode_response.raise_for_status()
+                if any(
+                    word in item_type
+                    for word in ["administrative", "district", "county"]
+                ):
+                    selected_location = item
+                    break
 
-                geocode_results = (
-                    geocode_response.json()
-                )
+            latitude = float(selected_location["lat"])
+            longitude = float(selected_location["lon"])
 
-        except (
-            requests.RequestException,
-            ValueError
-        ) as error:
+        except (requests.RequestException, ValueError, KeyError) as error:
 
-            logger.exception(
-                "Nominatim geocoding failed: %s",
-                error
-            )
+            logger.exception("Nominatim geocoding failed.")
 
-            return EMPTY_RESULT
-
-        if not geocode_results:
-
-            logger.warning(
-                "No geocoding results for: %s",
-                location_query
-            )
-
-            return EMPTY_RESULT
-
-        # Prefer administrative results.
-        selected_location = geocode_results[0]
-
-        for result in geocode_results:
-
-            result_type = (
-                str(result.get("type", "")).lower()
-                + " "
-                + str(result.get("class", "")).lower()
-            )
-
-            if any(
-                word in result_type
-                for word in [
-                    "administrative",
-                    "district",
-                    "county"
-                ]
-            ):
-
-                selected_location = result
-                break
-
-        try:
-
-            latitude = float(
-                selected_location["lat"]
-            )
-
-            longitude = float(
-                selected_location["lon"]
-            )
-
-        except (
-            KeyError,
-            TypeError,
-            ValueError
-        ):
-
-            logger.warning(
-                "Geocoding returned invalid coordinates."
-            )
-
-            return EMPTY_RESULT
+            return {
+                **EMPTY_RESULT,
+                "error": "Unable to find the selected location."
+            }
 
     else:
 
         try:
-
             latitude = float(latitude)
             longitude = float(longitude)
 
         except (TypeError, ValueError):
-
-            raise ValueError(
-                "Invalid location coordinates."
-            )
-
-    # -----------------------------------------------------
-    # 3. VALIDATE COORDINATES
-    # -----------------------------------------------------
+            raise ValueError("Invalid location coordinates.")
 
     if not valid_coordinates(latitude, longitude):
-
-        raise ValueError(
-            "Invalid latitude or longitude."
-        )
+        raise ValueError("Invalid latitude or longitude.")
 
     logger.info(
         "Tourist search center: %s, %s | Radius: %s km",
@@ -1429,17 +1374,17 @@ def google_places_text_search(
     )
 
     # -----------------------------------------------------
-    # 4. BUILD OVERPASS QUERY
+    # 3. BUILD OVERPASS QUERY
     # -----------------------------------------------------
 
     overpass_query = f"""
-    [out:json][timeout:12];
+    [out:json][timeout:20];
 
     (
-      nwr(around:{radius_meters},{latitude},{longitude})["tourism"];
+      nwr(around:{radius_meters},{latitude},{longitude})["tourism"~"attraction|museum|viewpoint|zoo|theme_park|artwork|gallery|aquarium|hotel|camp_site"];
       nwr(around:{radius_meters},{latitude},{longitude})["historic"];
-      nwr(around:{radius_meters},{latitude},{longitude})["leisure"="park"];
-      nwr(around:{radius_meters},{latitude},{longitude})["natural"~"waterfall|beach|cave_entrance|peak|spring|lake"];
+      nwr(around:{radius_meters},{latitude},{longitude})["leisure"~"park|nature_reserve|garden"];
+      nwr(around:{radius_meters},{latitude},{longitude})["natural"~"waterfall|beach|cave_entrance|peak|spring|lake|wood"];
       nwr(around:{radius_meters},{latitude},{longitude})["amenity"="place_of_worship"];
       nwr(around:{radius_meters},{latitude},{longitude})["waterway"="waterfall"];
       nwr(around:{radius_meters},{latitude},{longitude})["man_made"="monument"];
@@ -1450,13 +1395,13 @@ def google_places_text_search(
     """
 
     # -----------------------------------------------------
-    # 5. TRY MULTIPLE OVERPASS SERVERS
+    # 4. TRY OVERPASS SERVERS
     # -----------------------------------------------------
 
     osm_data = None
     last_error = None
 
-    for server_number, overpass_url in enumerate(
+    for server_number, server_url in enumerate(
         OVERPASS_URLS,
         start=1
     ):
@@ -1464,46 +1409,36 @@ def google_places_text_search(
         try:
 
             logger.info(
-                "Trying Overpass server %s/%s: %s",
+                "Trying Overpass server %s/%s",
                 server_number,
-                len(OVERPASS_URLS),
-                overpass_url
+                len(OVERPASS_URLS)
             )
 
             response = requests.post(
-                overpass_url,
-                data={
-                    "data": overpass_query
-                },
+                server_url,
+                data={"data": overpass_query},
                 headers=HEADERS,
-                timeout=(2, 8)
+                timeout=(5, 20)
             )
 
             response.raise_for_status()
 
-            candidate_data = response.json()
+            candidate = response.json()
 
-            if not isinstance(candidate_data, dict):
+            if not isinstance(candidate, dict):
+                raise ValueError("Invalid Overpass response.")
 
-                raise ValueError(
-                    "Invalid Overpass response."
-                )
+            elements = candidate.get("elements")
 
-            if not isinstance(
-                candidate_data.get("elements"),
-                list
-            ):
+            if not isinstance(elements, list):
+                raise ValueError("Overpass elements are missing.")
 
-                raise ValueError(
-                    "Overpass response has no valid elements."
-                )
-
-            osm_data = candidate_data
+            osm_data = candidate
 
             logger.info(
-                "Overpass server succeeded: %s | Elements: %s",
-                overpass_url,
-                len(osm_data["elements"])
+                "Overpass succeeded: %s | Elements: %s",
+                server_url,
+                len(elements)
             )
 
             break
@@ -1516,97 +1451,86 @@ def google_places_text_search(
             last_error = error
 
             logger.warning(
-                "Overpass server %s failed: %s | %s",
-                server_number,
-                overpass_url,
+                "Overpass server %s failed: %s",
+                server_url,
                 error
             )
 
-            continue
-
     # -----------------------------------------------------
-    # 6. HANDLE ALL OVERPASS FAILURES
+    # 5. HANDLE SERVER FAILURE
     # -----------------------------------------------------
 
     if osm_data is None:
 
         logger.error(
-            "All Overpass servers failed. Last error: %s",
+            "All Overpass servers failed: %s",
             last_error
         )
 
-        return EMPTY_RESULT
+        return {
+            **EMPTY_RESULT,
+            "error": "All OpenStreetMap servers are currently unavailable."
+        }
 
     # -----------------------------------------------------
-    # 7. EXTRACT AND NORMALIZE PLACES
+    # 6. EXTRACT PLACES
     # -----------------------------------------------------
-
-    elements = osm_data.get("elements", [])
 
     candidates = []
 
-    for element in elements:
+    for element in osm_data.get("elements", []):
 
         if not isinstance(element, dict):
             continue
 
-        tags = element.get("tags", {})
+        tags = element.get("tags") or {}
 
         if not isinstance(tags, dict):
             continue
 
-        # Get best available place name.
-        place_name = (
+        name = (
             tags.get("name:en")
             or tags.get("name")
             or tags.get("official_name")
             or tags.get("short_name")
         )
 
-        if not place_name:
+        if not name:
             continue
 
-        place_name = str(place_name).strip()
+        name = str(name).strip()
 
-        if not place_name:
+        if not name:
             continue
-
-        # -------------------------------------------------
-        # GET PLACE COORDINATES
-        # -------------------------------------------------
 
         element_type = element.get("type")
 
         if element_type == "node":
 
-            place_latitude = element.get("lat")
-            place_longitude = element.get("lon")
+            place_lat = element.get("lat")
+            place_lon = element.get("lon")
 
         else:
 
             center = element.get("center") or {}
 
-            place_latitude = center.get("lat")
-            place_longitude = center.get("lon")
+            place_lat = center.get("lat")
+            place_lon = center.get("lon")
 
-        if not valid_coordinates(
-            place_latitude,
-            place_longitude
-        ):
-
+        if not valid_coordinates(place_lat, place_lon):
             continue
 
-        place_latitude = float(place_latitude)
-        place_longitude = float(place_longitude)
+        place_lat = float(place_lat)
+        place_lon = float(place_lon)
 
         element_id = element.get("id")
 
         if element_id is None:
             continue
 
-        # -------------------------------------------------
-        # PLACE CATEGORY
-        # -------------------------------------------------
+        # ---------------------------------------------
+        # CATEGORY
+        # ---------------------------------------------
 
         category = (
             tags.get("tourism")
@@ -1619,47 +1543,72 @@ def google_places_text_search(
             or "tourist_attraction"
         )
 
-        # -------------------------------------------------
-        # FORMATTED ADDRESS
-        # -------------------------------------------------
+        # ---------------------------------------------
+        # ADDRESS
+        # ---------------------------------------------
 
         address_parts = [
             tags.get("addr:housenumber"),
             tags.get("addr:street"),
             tags.get("addr:suburb"),
-            (
-                tags.get("addr:city")
-                or tags.get("addr:town")
-                or tags.get("addr:village")
-            ),
+            tags.get("addr:city") or tags.get("addr:town"),
+            tags.get("addr:village"),
             tags.get("addr:district"),
             tags.get("addr:state"),
             tags.get("addr:country")
         ]
 
-        formatted_address = ", ".join(
-            str(part)
+        address = ", ".join(
+            str(part).strip()
             for part in address_parts
             if part
         )
 
-        if not formatted_address:
+        if not address:
+            address = str(query or "India").strip()
 
-            formatted_address = (
-                str(query or "")
-                .replace("Tourist attractions in", "")
-                .strip()
-            )
+        # ---------------------------------------------
+        # PRIORITY
+        # ---------------------------------------------
 
-        # -------------------------------------------------
+        priority = 0
+
+        tourism = tags.get("tourism", "")
+        historic = tags.get("historic", "")
+        natural = tags.get("natural", "")
+
+        if tourism in [
+            "attraction", "museum", "viewpoint", "zoo",
+            "theme_park", "artwork", "gallery", "aquarium"
+        ]:
+            priority += 10
+
+        if historic in [
+            "monument", "fort", "castle",
+            "archaeological_site", "ruins", "memorial"
+        ]:
+            priority += 8
+
+        if tags.get("amenity") == "place_of_worship":
+            priority += 5
+
+        if natural in [
+            "waterfall", "beach", "cave_entrance",
+            "peak", "lake", "spring"
+        ]:
+            priority += 5
+
+        if tags.get("leisure") in ["park", "nature_reserve", "garden"]:
+            priority += 4
+
+        # ---------------------------------------------
         # MAP URLS
-        # -------------------------------------------------
+        # ---------------------------------------------
 
         map_url = (
             "https://www.openstreetmap.org/"
-            f"?mlat={place_latitude}"
-            f"&mlon={place_longitude}"
-            f"#map=16/{place_latitude}/{place_longitude}"
+            f"?mlat={place_lat}&mlon={place_lon}"
+            f"#map=16/{place_lat}/{place_lon}"
         )
 
         osm_url = (
@@ -1667,85 +1616,27 @@ def google_places_text_search(
             f"{element_type}/{element_id}"
         )
 
-        # -------------------------------------------------
-        # TOURIST RELEVANCE SCORE
-        # -------------------------------------------------
-
-        tourism_value = tags.get("tourism", "")
-        historic_value = tags.get("historic", "")
-        natural_value = tags.get("natural", "")
-
-        priority = 0
-
-        if tourism_value in [
-            "attraction",
-            "museum",
-            "viewpoint",
-            "zoo",
-            "theme_park",
-            "artwork",
-            "gallery",
-            "information"
-        ]:
-
-            priority += 10
-
-        if historic_value in [
-            "monument",
-            "fort",
-            "castle",
-            "archaeological_site",
-            "temple",
-            "ruins",
-            "memorial"
-        ]:
-
-            priority += 8
-
-        if tags.get("amenity") == "place_of_worship":
-
-            priority += 5
-
-        if natural_value in [
-            "waterfall",
-            "beach",
-            "cave_entrance",
-            "peak",
-            "lake",
-            "spring"
-        ]:
-
-            priority += 5
-
-        if tags.get("leisure") == "park":
-
-            priority += 4
-
-        # -------------------------------------------------
-        # BUILD PLACE OBJECT
-        # -------------------------------------------------
-
-        place_id = f"{element_type}_{element_id}"
+        # ---------------------------------------------
+        # BUILD PLACE
+        # ---------------------------------------------
 
         place = {
 
-            "id": place_id,
+            "id": f"{element_type}_{element_id}",
 
-            "name": place_name,
+            "name": name,
 
-            "displayName": {
-                "text": place_name
-            },
+            "displayName": {"text": name},
 
-            "formattedAddress": formatted_address,
+            "formattedAddress": address,
 
             "location": {
-                "latitude": place_latitude,
-                "longitude": place_longitude
+                "latitude": place_lat,
+                "longitude": place_lon
             },
 
-            "lat": place_latitude,
-            "lon": place_longitude,
+            "lat": place_lat,
+            "lon": place_lon,
 
             "primaryType": category,
             "types": [category],
@@ -1756,6 +1647,7 @@ def google_places_text_search(
             "rating": None,
             "userRatingCount": 0,
 
+            # OSM does not automatically provide photos.
             "photos": [],
 
             "googleMapsUri": map_url,
@@ -1780,62 +1672,48 @@ def google_places_text_search(
             },
 
             "source": "OpenStreetMap"
-
         }
 
         candidates.append(place)
 
     # -----------------------------------------------------
-    # 8. SORT BEFORE DUPLICATE FILTERING
+    # 7. SORT BY TOURIST IMPORTANCE
     # -----------------------------------------------------
 
     candidates.sort(
-        key=lambda place: (
-            -place["priority"],
-            place["name"].casefold()
+        key=lambda item: (
+            -item["priority"],
+            item["name"].casefold()
         )
     )
 
     # -----------------------------------------------------
-    # 9. REMOVE TRUE DUPLICATES
+    # 8. REMOVE ONLY REAL DUPLICATES
     # -----------------------------------------------------
 
-    # Same name at different locations should be retained.
-    # Same name within approximately 150 metres is treated
-    # as a possible duplicate.
-
     unique_places = []
-
-    seen_locations_by_name = {}
+    seen_ids = set()
+    seen_names = {}
 
     for place in candidates:
 
-        normalized_name = normalize_name(
-            place["name"]
-        )
+        place_id = place["id"]
 
-        place_lat = place["lat"]
-        place_lon = place["lon"]
+        if place_id in seen_ids:
+            continue
 
-        previous_locations = (
-            seen_locations_by_name.get(
-                normalized_name,
-                []
-            )
-        )
+        normalized = normalize_name(place["name"])
+
+        lat = place["lat"]
+        lon = place["lon"]
 
         duplicate = False
 
-        for previous_lat, previous_lon in previous_locations:
+        for old_lat, old_lon in seen_names.get(normalized, []):
 
-            distance = approximate_distance_km(
-                place_lat,
-                place_lon,
-                previous_lat,
-                previous_lon
-            )
-
-            if distance <= 0.15:
+            if distance_km(
+                lat, lon, old_lat, old_lon
+            ) <= 0.15:
 
                 duplicate = True
                 break
@@ -1843,39 +1721,28 @@ def google_places_text_search(
         if duplicate:
             continue
 
-        seen_locations_by_name.setdefault(
-            normalized_name,
-            []
-        ).append(
-            (place_lat, place_lon)
-        )
+        seen_ids.add(place_id)
+
+        seen_names.setdefault(normalized, []).append((lat, lon))
 
         unique_places.append(place)
 
     # -----------------------------------------------------
-    # 10. LIMIT RESULTS
+    # 9. LIMIT RESULTS
     # -----------------------------------------------------
 
     unique_places = unique_places[:200]
 
     logger.info(
-        "Tourist places search completed | "
-        "District: %s | Places: %s | "
-        "Center: %s, %s | Radius: %s km",
+        "Tourist search completed | Query: %s | Count: %s",
         query,
-        len(unique_places),
-        latitude,
-        longitude,
-        radius_km
+        len(unique_places)
     )
-
-    # -----------------------------------------------------
-    # 11. RETURN FRONTEND-COMPATIBLE RESULTS
-    # -----------------------------------------------------
 
     return {
         "places": unique_places,
-        "nextPageToken": None
+        "nextPageToken": None,
+        "error": None
     }
 
 # =========================================================
@@ -1887,17 +1754,69 @@ def google_places_text_search(
 def tourist_places():
 
     import re
+    import math
 
     # -----------------------------------------------------
-    # HELPER 1: FORMAT AND VALIDATE TOURIST PLACES
+    # HELPER 1: VALIDATE COORDINATES
+    # -----------------------------------------------------
+
+    def get_valid_coordinates(latitude, longitude):
+
+        try:
+
+            latitude = float(latitude)
+            longitude = float(longitude)
+
+            if not math.isfinite(latitude) or not math.isfinite(longitude):
+                return None, None
+
+            if not (-90 <= latitude <= 90):
+                return None, None
+
+            if not (-180 <= longitude <= 180):
+                return None, None
+
+            return latitude, longitude
+
+        except (TypeError, ValueError):
+            return None, None
+
+    # -----------------------------------------------------
+    # HELPER 2: DISTANCE
+    # -----------------------------------------------------
+
+    def calculate_distance(lat1, lon1, lat2, lon2):
+
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(lat2)
+        lon2 = math.radians(lon2)
+
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+
+        a = (
+            math.sin(dlat / 2) ** 2
+            + math.cos(lat1)
+            * math.cos(lat2)
+            * math.sin(dlon / 2) ** 2
+        )
+
+        return 6371 * 2 * math.atan2(
+            math.sqrt(a),
+            math.sqrt(1 - a)
+        )
+
+    # -----------------------------------------------------
+    # HELPER 3: FORMAT PLACES
     # -----------------------------------------------------
 
     def format_places(osm_places):
 
         formatted_places = []
 
-        # Avoid duplicate tourist place names.
-        seen_names = set()
+        seen_ids = set()
+        seen_names = {}
 
         for place in osm_places or []:
 
@@ -1921,22 +1840,14 @@ def tourist_places():
                 else place.get("lon")
             )
 
-            # Validate coordinates.
-            try:
+            latitude, longitude = get_valid_coordinates(
+                latitude,
+                longitude
+            )
 
-                latitude = float(latitude)
-                longitude = float(longitude)
-
-                if not (-90 <= latitude <= 90):
-                    continue
-
-                if not (-180 <= longitude <= 180):
-                    continue
-
-            except (TypeError, ValueError):
+            if latitude is None or longitude is None:
                 continue
 
-            # Get display name.
             display_name = place.get("displayName") or {}
 
             if isinstance(display_name, dict):
@@ -1945,55 +1856,90 @@ def tourist_places():
             name = (
                 place.get("name")
                 or display_name
-                or "Tourist Destination"
+                or ""
             )
 
             name = str(name).strip()
 
-            if not name or name == "Tourist Destination":
+            if not name:
                 continue
 
-            # Normalize names for duplicate detection.
+            # ---------------------------------------------
+            # DUPLICATE CHECK
+            # ---------------------------------------------
+
+            place_id = (
+                place.get("id")
+                or place.get("place_id")
+            )
+
+            if place_id and place_id in seen_ids:
+                continue
+
             normalized_name = re.sub(
                 r"\s+",
                 " ",
                 name.casefold()
             ).strip()
 
-            if normalized_name in seen_names:
+            duplicate = False
+
+            for old_lat, old_lon in seen_names.get(
+                normalized_name,
+                []
+            ):
+
+                if calculate_distance(
+                    latitude,
+                    longitude,
+                    old_lat,
+                    old_lon
+                ) <= 0.15:
+
+                    duplicate = True
+                    break
+
+            if duplicate:
                 continue
 
-            seen_names.add(normalized_name)
+            if place_id:
+                seen_ids.add(place_id)
 
-            # Address.
+            seen_names.setdefault(
+                normalized_name,
+                []
+            ).append((latitude, longitude))
+
+            # ---------------------------------------------
+            # OTHER DETAILS
+            # ---------------------------------------------
+
             address = (
                 place.get("formattedAddress")
                 or place.get("address")
                 or "Location details unavailable"
             )
 
-            # Category.
             category = (
                 place.get("primaryType")
                 or place.get("category")
                 or "tourist_attraction"
             )
 
-            # Description.
             description = (
                 place.get("description")
-                or f"Explore {name}, a beautiful destination in India."
+                or f"Explore {name}, a tourist destination in India."
             )
+
+            # ---------------------------------------------
+            # FINAL FRONTEND OBJECT
+            # ---------------------------------------------
 
             formatted_places.append({
 
                 **place,
 
-                # Frontend-compatible fields.
-                "place_id": (
-                    place.get("id")
-                    or place.get("place_id")
-                ),
+                "place_id": place_id,
 
                 "name": name,
 
@@ -2007,93 +1953,57 @@ def tourist_places():
 
                 "category": category,
 
-                "photo_name": place.get("photo_name")
+                "photo_name": place.get("photo_name"),
+
+                "photos": place.get("photos") or []
 
             })
 
         return formatted_places
 
     # -----------------------------------------------------
-    # HELPER 2: CREATE STATE SLUG
+    # HELPER 4: CREATE SLUG
     # -----------------------------------------------------
 
     def create_slug(value):
 
         value = str(value or "").strip().lower()
 
-        slug = ""
+        value = re.sub(r"[^a-z0-9]+", "-", value)
 
-        for character in value:
-
-            if character.isalnum():
-                slug += character
-
-            elif character in [" ", "-", "_"]:
-                slug += "-"
-
-        while "--" in slug:
-            slug = slug.replace("--", "-")
-
-        return slug.strip("-")
+        return value.strip("-")
 
     # -----------------------------------------------------
-    # HELPER 3: BUILD ERROR MESSAGE
+    # HELPER 5: SEARCH ERROR
     # -----------------------------------------------------
 
     def get_search_error_message(error):
 
         logger.exception(
-            "Tourist places search error: %s",
+            "Tourist places search failed: %s",
             error
         )
 
         if isinstance(error, requests.Timeout):
 
             return (
-                "Tourist places server is taking too long "
-                "to respond. Please try again."
+                "Tourist places service is taking too long. "
+                "Please try again."
             )
 
         if isinstance(error, requests.RequestException):
 
             return (
-                "Unable to connect to the OpenStreetMap "
-                "servers. Please try again."
+                "Unable to connect to the tourist places service. "
+                "Please try again later."
             )
 
         return (
-            "Something went wrong while loading "
-            "tourist destinations."
+            "Something went wrong while loading tourist places."
         )
 
-    # -----------------------------------------------------
-    # HELPER 4: VALIDATE DISTRICT COORDINATES
-    # -----------------------------------------------------
-
-    def get_valid_coordinates(latitude, longitude):
-
-        if latitude is None or longitude is None:
-            return None, None
-
-        try:
-
-            latitude = float(latitude)
-            longitude = float(longitude)
-
-            if not (-90 <= latitude <= 90):
-                return None, None
-
-            if not (-180 <= longitude <= 180):
-                return None, None
-
-            return latitude, longitude
-
-        except (TypeError, ValueError):
-
-            return None, None
-
     # =====================================================
-    # GET REQUEST - LOAD SELECTED DISTRICT PAGE
+    # GET REQUEST
     # =====================================================
 
     if request.method == "GET":
@@ -2107,6 +2017,7 @@ def tourist_places():
         video_slug = ""
 
         places = []
+
         api_error = None
 
         top_attractions = 0
@@ -2115,14 +2026,12 @@ def tourist_places():
         user = get_current_user()
 
         # ---------------------------------------------
-        # VALIDATE DISTRICT ID
+        # VALIDATE DISTRICT
         # ---------------------------------------------
 
         if not district_id:
 
-            api_error = (
-                "Please select a district to explore tourist places."
-            )
+            api_error = "Please select a district."
 
         else:
 
@@ -2131,10 +2040,10 @@ def tourist_places():
                 district_id = int(district_id)
 
                 if district_id <= 0:
-                    raise ValueError("Invalid district ID.")
+                    raise ValueError()
 
                 # -------------------------------------
-                # FETCH DISTRICT AND STATE
+                # FETCH DISTRICT
                 # -------------------------------------
 
                 district = execute_query(
@@ -2157,100 +2066,74 @@ def tourist_places():
 
                 if not district:
 
-                    api_error = (
-                        "Selected district was not found."
-                    )
+                    api_error = "Selected district was not found."
 
                 else:
 
                     district_name = district["district_name"]
-
                     state_name = district["state_name"]
 
                     state_slug = create_slug(state_name)
-
                     video_slug = state_slug
-
-                    # ---------------------------------
-                    # GET DISTRICT COORDINATES
-                    # ---------------------------------
 
                     latitude, longitude = get_valid_coordinates(
                         district.get("latitude"),
                         district.get("longitude")
                     )
 
-                    # ---------------------------------
-                    # BUILD SEARCH QUERY
-                    # ---------------------------------
-
                     search_query = (
                         f"Tourist attractions in "
-                        f"{district_name}, "
-                        f"{state_name}, India"
+                        f"{district_name}, {state_name}, India"
                     )
 
                     logger.info(
-                        "Loading tourist places for %s, %s",
+                        "Loading tourist destinations: %s, %s",
                         district_name,
                         state_name
                     )
 
                     # ---------------------------------
-                    # SEARCH OPENSTREETMAP
+                    # SEARCH OSM
                     # ---------------------------------
 
-                    try:
+                    result = google_places_text_search(
+                        query=search_query,
+                        latitude=latitude,
+                        longitude=longitude,
+                        radius_km=25
+                    )
 
-                        result = google_places_text_search(
-                            query=search_query,
-                            latitude=latitude,
-                            longitude=longitude,
-                            radius_km=25
+                    if not isinstance(result, dict):
+
+                        raise ValueError(
+                            "Invalid OpenStreetMap response."
                         )
 
-                        if not isinstance(result, dict):
+                    places = format_places(
+                        result.get("places", [])
+                    )
 
-                            raise ValueError(
-                                "Invalid OpenStreetMap response."
-                            )
+                    # ---------------------------------
+                    # STATISTICS
+                    # ---------------------------------
 
-                        osm_places = result.get("places", [])
+                    top_attractions = len(places)
+                    best_places = len(places)
 
-                        if not isinstance(osm_places, list):
+                    if not places:
 
-                            raise ValueError(
-                                "Invalid tourist places data."
-                            )
-
-                        places = format_places(osm_places)
-
-                        # ---------------------------------
-                        # PAGE STATISTICS
-                        # ---------------------------------
-
-                        top_attractions = len(places)
-
-                        best_places = len(places)
-
-                        logger.info(
-                            "Tourist places loaded | "
-                            "District: %s | Places: %s",
-                            district_name,
-                            len(places)
+                        api_error = (
+                            result.get("error")
+                            or
+                            "No tourist destinations were found. "
+                            "Try another search radius."
                         )
 
-                        if not places:
-
-                            api_error = (
-                                "No tourist places were found "
-                                "in this area. Please try a "
-                                "larger search radius."
-                            )
-
-                    except Exception as error:
-
-                        api_error = get_search_error_message(error)
+                    logger.info(
+                        "District: %s | Places loaded: %s",
+                        district_name,
+                        len(places)
+                    )
 
             except (ValueError, TypeError):
 
@@ -2261,33 +2144,24 @@ def tourist_places():
                 api_error = get_search_error_message(error)
 
         # ---------------------------------------------
-        # RENDER TOURIST PLACES PAGE
+        # RENDER PAGE
         # ---------------------------------------------
 
         return render_template(
             "tourist_places.html",
-
             user=user,
-
             district_name=district_name,
-
             state_name=state_name,
-
             state_slug=state_slug,
-
             video_slug=video_slug,
-
             top_attractions=top_attractions,
-
             best_places=best_places,
-
             places=places,
-
             api_error=api_error
         )
 
     # =====================================================
-    # POST REQUEST - SEARCH TOURIST PLACES
+    # POST REQUEST
     # =====================================================
 
     data = request.get_json(silent=True) or request.form
@@ -2297,20 +2171,18 @@ def tourist_places():
     ).strip().lower()
 
     # -----------------------------------------------------
-    # VALIDATE SEARCH RADIUS
+    # VALIDATE RADIUS
     # -----------------------------------------------------
 
     try:
 
-        radius_km = int(
-            data.get("radius_km", 25)
-        )
+        radius_km = int(data.get("radius_km", 25))
 
     except (ValueError, TypeError):
 
         return jsonify({
             "success": False,
-            "message": "Please select a valid search radius."
+            "message": "Please select a valid radius."
         }), 400
 
     if radius_km not in [5, 10, 25, 50, 100]:
@@ -2348,7 +2220,7 @@ def tourist_places():
             district_id = int(district_id)
 
             if district_id <= 0:
-                raise ValueError("Invalid district ID.")
+                raise ValueError()
 
         except (ValueError, TypeError):
 
@@ -2356,10 +2228,6 @@ def tourist_places():
                 "success": False,
                 "message": "Invalid district selected."
             }), 400
-
-        # ---------------------------------------------
-        # FETCH DISTRICT INFORMATION
-        # ---------------------------------------------
 
         try:
 
@@ -2381,10 +2249,10 @@ def tourist_places():
                 fetchone=True
             )
 
-        except Exception as error:
+        except Exception:
 
             logger.exception(
-                "Failed to fetch district information."
+                "Unable to fetch district information."
             )
 
             return jsonify({
@@ -2419,41 +2287,18 @@ def tourist_places():
     elif search_mode == "current_location":
 
         latitude = data.get("latitude")
-
         longitude = data.get("longitude")
+
+        latitude, longitude = get_valid_coordinates(
+            latitude,
+            longitude
+        )
 
         if latitude is None or longitude is None:
 
             return jsonify({
                 "success": False,
-                "message": "Current location is required."
-            }), 400
-
-        try:
-
-            latitude = float(latitude)
-
-            longitude = float(longitude)
-
-        except (ValueError, TypeError):
-
-            return jsonify({
-                "success": False,
-                "message": "Invalid location coordinates."
-            }), 400
-
-        if not (-90 <= latitude <= 90):
-
-            return jsonify({
-                "success": False,
-                "message": "Invalid latitude value."
-            }), 400
-
-        if not (-180 <= longitude <= 180):
-
-            return jsonify({
-                "success": False,
-                "message": "Invalid longitude value."
+                "message": "Valid current location is required."
             }), 400
 
         search_query = "Tourist attractions"
@@ -2466,7 +2311,7 @@ def tourist_places():
         }), 400
 
     # =====================================================
-    # SEARCH USING OPENSTREETMAP
+    # SEARCH TOURIST DESTINATIONS
     # =====================================================
 
     try:
@@ -2481,22 +2326,12 @@ def tourist_places():
         if not isinstance(result, dict):
 
             raise ValueError(
-                "Invalid OpenStreetMap response."
-            )
-
-        osm_places = result.get("places", [])
-
-        if not isinstance(osm_places, list):
-
-            raise ValueError(
                 "Invalid tourist places response."
             )
 
-        # ---------------------------------------------
-        # FORMAT AND REMOVE DUPLICATES
-        # ---------------------------------------------
-
-        places = format_places(osm_places)
+        places = format_places(
+            result.get("places", [])
+        )
 
         next_page_token = result.get("nextPageToken")
 
@@ -2533,26 +2368,34 @@ def tourist_places():
 
         except Exception:
 
-            # Search results should still be returned
-            # even if saving history fails.
-
             logger.exception(
                 "Unable to save tourist search history."
             )
 
         # ---------------------------------------------
-        # RETURN JSON RESPONSE
+        # RETURN RESULTS
         # ---------------------------------------------
+
+        if not places:
+
+            return jsonify({
+                "success": False,
+                "message": (
+                    result.get("error")
+                    or
+                    "No tourist destinations found. "
+                    "Please try a larger search radius."
+                ),
+                "places": [],
+                "next_page_token": None,
+                "count": 0
+            }), 200
 
         return jsonify({
 
             "success": True,
 
-            "message": (
-                "Tourist places found successfully."
-                if places
-                else "No tourist places found for this location."
-            ),
+            "message": "Tourist destinations loaded successfully.",
 
             "places": places,
 
@@ -2565,43 +2408,27 @@ def tourist_places():
     except Exception as error:
 
         logger.exception(
-            "OpenStreetMap POST search failed."
+            "Tourist places POST search failed."
         )
 
         if isinstance(error, requests.Timeout):
 
-            status_code = 504
+            return jsonify({
+                "success": False,
+                "message": "Tourist places search timed out."
+            }), 504
 
-            message = (
-                "The tourist places server took too long "
-                "to respond. Please try again."
-            )
+        if isinstance(error, requests.RequestException):
 
-        elif isinstance(error, requests.RequestException):
-
-            status_code = 502
-
-            message = (
-                "Unable to connect to OpenStreetMap servers."
-            )
-
-        else:
-
-            status_code = 500
-
-            message = (
-                "Something went wrong while searching "
-                "tourist destinations."
-            )
+            return jsonify({
+                "success": False,
+                "message": "Unable to connect to OpenStreetMap."
+            }), 502
 
         return jsonify({
-
             "success": False,
-
-            "message": message
-
-        }), status_code
-
+            "message": "Unable to load tourist destinations."
+        }), 500
 
 # =========================================================
 # 14. LOAD MORE PLACES
