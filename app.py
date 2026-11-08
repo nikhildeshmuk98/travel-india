@@ -243,6 +243,7 @@ def admin_required(function):
     return wrapper
 
 
+
 def get_current_user():
 
     user_id = session.get("user_id")
@@ -250,9 +251,16 @@ def get_current_user():
     if not user_id:
         return None
 
-    return execute_query(
+    user = execute_query(
         """
-        SELECT id, full_name, email, profile_image, role, auth_provider
+        SELECT
+            id,
+            full_name,
+            email,
+            profile_image,
+            google_picture,
+            role,
+            auth_provider
         FROM users
         WHERE id = %s AND is_active = 1
         """,
@@ -260,7 +268,36 @@ def get_current_user():
         fetchone=True
     )
 
+    if not user:
+        return None
 
+    # Uploaded image gets first priority.
+    uploaded_image = user.get("profile_image")
+    google_image = user.get("google_picture")
+
+    if uploaded_image:
+        if uploaded_image.startswith(("http://", "https://")):
+            image_url = uploaded_image
+        else:
+            image_url = url_for(
+                "static",
+                filename=uploaded_image
+            )
+
+    elif google_image:
+        image_url = google_image
+
+    else:
+        image_url = None
+
+    # Common image URL for templates.
+    user["profile_image_url"] = image_url
+
+    # Keep profile_image as a display-ready URL
+    # for templates that directly use this field.
+    user["profile_image"] = image_url
+
+    return user
 # =========================================================
 # 5. HOME PAGE
 # =========================================================
@@ -935,7 +972,6 @@ def login():
 # =========================================================
 # 8. GOOGLE LOGIN
 # =========================================================
-
 @app.route("/google-login", methods=["POST"])
 def google_login():
 
@@ -967,14 +1003,22 @@ def google_login():
         full_name = google_user.get("name", "Google User")
         picture = google_user.get("picture")
 
-        if not email or not google_id or not google_user.get("email_verified"):
+        if (
+            not email
+            or not google_id
+            or not google_user.get("email_verified")
+        ):
             return jsonify({
                 "success": False,
                 "message": "Google email verification failed."
             }), 401
 
         user = execute_query(
-            "SELECT * FROM users WHERE email = %s",
+            """
+            SELECT *
+            FROM users
+            WHERE email = %s
+            """,
             (email,),
             fetchone=True
         )
@@ -987,20 +1031,22 @@ def google_login():
                     "message": "Your account is inactive."
                 }), 403
 
-            if user["google_id"] and user["google_id"] != google_id:
+            if (
+                user.get("google_id")
+                and user["google_id"] != google_id
+            ):
                 return jsonify({
                     "success": False,
                     "message": "Google account does not match."
                 }), 403
 
+            # Update Google picture separately.
+            # Never overwrite manually uploaded profile_image.
             execute_query(
                 """
                 UPDATE users
                 SET google_id = %s,
-                    profile_image = COALESCE(
-                    NULLIF(profile_image, ''),
-                      %s
-                      )
+                    google_picture = COALESCE(%s, google_picture)
                 WHERE id = %s
                 """,
                 (google_id, picture, user["id"])
@@ -1014,16 +1060,29 @@ def google_login():
             user_id = execute_query(
                 """
                 INSERT INTO users
-                (full_name, email, google_id, profile_image,
-                 auth_provider, role)
-                VALUES (%s, %s, %s, %s, 'google', 'user')
+                (
+                    full_name,
+                    email,
+                    google_id,
+                    profile_image,
+                    google_picture,
+                    auth_provider,
+                    role
+                )
+                VALUES (%s, %s, %s, NULL, %s, 'google', 'user')
                 """,
-                (full_name, email, google_id, picture)
+                (
+                    full_name,
+                    email,
+                    google_id,
+                    picture
+                )
             )
 
             role = "user"
 
         session.clear()
+
         session["user_id"] = user_id
         session["role"] = role
         session["full_name"] = full_name
@@ -1031,26 +1090,27 @@ def google_login():
         return jsonify({
             "success": True,
             "redirect": (
-                url_for("admin") if role == "admin"
+                url_for("admin")
+                if role == "admin"
                 else url_for("dashboard")
             )
         })
 
     except ValueError:
+
         return jsonify({
             "success": False,
             "message": "Invalid Google login token."
         }), 401
 
     except Exception:
+
         logger.exception("Google login failed")
 
         return jsonify({
             "success": False,
             "message": "Google login failed. Please try again."
         }), 500
-
-
 # =========================================================
 # 9. LOGOUT
 # =========================================================
@@ -3712,7 +3772,6 @@ def update_profile():
 # =========================================================
 # UPLOAD PROFILE IMAGE
 # =========================================================
-
 @app.route("/profile/upload-image", methods=["POST"])
 @login_required
 def upload_profile_image():
@@ -3753,10 +3812,36 @@ def upload_profile_image():
     size = image.tell()
     image.seek(0)
 
-    if size > 5 * 1024 * 1024:
+    if size <= 0 or size > 5 * 1024 * 1024:
         return jsonify({
             "success": False,
-            "message": "Image must be below 5 MB."
+            "message": "Image must be between 1 byte and 5 MB."
+        }), 400
+
+    # Verify actual image file signature.
+    header = image.read(12)
+    image.seek(0)
+
+    valid_image = False
+
+    if extension in {"jpg", "jpeg"}:
+        valid_image = header.startswith(b"\xff\xd8\xff")
+
+    elif extension == "png":
+        valid_image = header.startswith(
+            b"\x89PNG\r\n\x1a\n"
+        )
+
+    elif extension == "webp":
+        valid_image = (
+            header.startswith(b"RIFF")
+            and header[8:12] == b"WEBP"
+        )
+
+    if not valid_image:
+        return jsonify({
+            "success": False,
+            "message": "Invalid image file."
         }), 400
 
     upload_folder = os.path.join(
@@ -3769,39 +3854,99 @@ def upload_profile_image():
 
     new_filename = f"{uuid.uuid4().hex}.{extension}"
 
-    image.save(
-        os.path.join(upload_folder, new_filename)
+    new_path = os.path.join(
+        upload_folder,
+        new_filename
     )
 
     image_path = f"uploads/profile/{new_filename}"
 
-    execute_query(
-        """
-        UPDATE users
-        SET profile_image = %s
-        WHERE id = %s
-        """,
-        (image_path, session["user_id"])
-    )
+    try:
 
-    return jsonify({
-        "success": True,
-        "message": "Profile image uploaded successfully!",
-        "image_url": url_for("static", filename=image_path)
-    })
+        image.save(new_path)
 
+        # Get old uploaded image.
+        old_user = execute_query(
+            """
+            SELECT profile_image
+            FROM users
+            WHERE id = %s
+            """,
+            (session["user_id"],),
+            fetchone=True
+        )
+
+        if not old_user:
+            os.remove(new_path)
+
+            return jsonify({
+                "success": False,
+                "message": "User not found."
+            }), 404
+
+        old_image = old_user.get("profile_image")
+
+        # Save new image path in database.
+        execute_query(
+            """
+            UPDATE users
+            SET profile_image = %s
+            WHERE id = %s
+            """,
+            (image_path, session["user_id"])
+        )
+
+        # Delete previous local uploaded image.
+        # Google picture URLs are never deleted.
+        if old_image and not old_image.startswith(
+            ("http://", "https://")
+        ):
+
+            old_path = os.path.abspath(
+                os.path.join(app.static_folder, old_image)
+            )
+
+            upload_root = os.path.abspath(upload_folder)
+
+            if (
+                os.path.commonpath(
+                    [upload_root, old_path]
+                ) == upload_root
+                and os.path.isfile(old_path)
+            ):
+                os.remove(old_path)
+
+        return jsonify({
+            "success": True,
+            "message": "Profile image uploaded successfully!",
+            "image_url": (
+                url_for("static", filename=image_path)
+                + f"?v={uuid.uuid4().hex}"
+            )
+        })
+
+    except Exception:
+
+        logger.exception("Profile image upload failed")
+
+        if os.path.isfile(new_path):
+            os.remove(new_path)
+
+        return jsonify({
+            "success": False,
+            "message": "Unable to upload profile image."
+        }), 500
 
 # =========================================================
 # REMOVE PROFILE IMAGE
 # =========================================================
-
 @app.route("/profile/remove-image", methods=["POST"])
 @login_required
 def remove_profile_image():
 
     user = execute_query(
         """
-        SELECT profile_image
+        SELECT profile_image, google_picture
         FROM users
         WHERE id = %s
         """,
@@ -3816,7 +3961,9 @@ def remove_profile_image():
         }), 404
 
     old_image = user.get("profile_image")
+    google_image = user.get("google_picture")
 
+    # Remove only manually uploaded image.
     execute_query(
         """
         UPDATE users
@@ -3826,9 +3973,17 @@ def remove_profile_image():
         (session["user_id"],)
     )
 
-    if old_image:
+    # Delete local uploaded file only.
+    if old_image and not old_image.startswith(
+        ("http://", "https://")
+    ):
+
         upload_folder = os.path.abspath(
-            os.path.join(app.static_folder, "uploads", "profile")
+            os.path.join(
+                app.static_folder,
+                "uploads",
+                "profile"
+            )
         )
 
         old_path = os.path.abspath(
@@ -3836,14 +3991,17 @@ def remove_profile_image():
         )
 
         if (
-            os.path.commonpath([upload_folder, old_path]) == upload_folder
+            os.path.commonpath(
+                [upload_folder, old_path]
+            ) == upload_folder
             and os.path.isfile(old_path)
         ):
             os.remove(old_path)
 
     return jsonify({
         "success": True,
-        "message": "Profile image removed successfully!"
+        "message": "Profile image removed successfully!",
+        "image_url": google_image or None
     })
 # =========================================================
 # 27. CHANGE PASSWORD
